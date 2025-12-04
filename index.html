@@ -253,7 +253,13 @@
         </div>
 
         <div class="card" id="note-card">
-            <span class="section-title">2. Note (文字/語音)</span>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span class="section-title" style="margin-bottom: 0;">2. Note (文字/語音)</span>
+                <button id="copyNoteBtn" onclick="copyNote()" class="btn-half btn-gallery" style="flex: unset; width: auto; padding: 6px 15px; background-color: #6c757d; font-size: 0.9em;">
+                    📋 複製 (Copy)
+                </button>
+            </div>
             <textarea id="noteInput" placeholder="After taking a photo, type here or use voice... (拍照後，在此輸入或使用語音)"></textarea>
             
             <div class="voice-controls">
@@ -341,7 +347,6 @@
     const DEFAULT_PASS = "1234"; 
     
     // --- 這裡是你要求的寫死路徑 (FIXED PATHS) ---
-    // 我已經將你提供的連結轉換成對應的 ID 並固定於此。
     const FIXED_SCRIPT_ID = "AKfycbzTDioUw8L5vZ9H3rUEB-df_sSmJ4kg86NFraktwmU4-qtiESh_u_tZPnyIsUOW9LaK/exec";
     const FIXED_SHEET_ID = "1GcnAkIHAhnVjrH9bO9TQbdTUwQT17XtyQWUPh7WSTLA/edit?gid=0#gid=0";
     const FIXED_FOLDER_ID = "1MCaCvWS73lyPd90yMXnDrD5BqiEw7O08";
@@ -352,8 +357,8 @@
     // 錄音狀態
     let isRecording = false; 
     let isManualStop = false; 
-    let voiceTimer = null;          
-    let countdownInterval = null;   
+    let voiceTimer = null; 
+    let countdownInterval = null; 
     let punctuationTimer = null; 
     let timeLeft = 0; 
     let snapshotText = ""; 
@@ -694,6 +699,59 @@
         document.getElementById('display-timeout').innerText = originalTime;
     }
 
+    // ================= 輔助功能：複製文字 (新功能) =================
+    function copyNote() {
+        const noteInput = document.getElementById('noteInput');
+        const copyBtn = document.getElementById('copyNoteBtn');
+        
+        // 檢查是否有文字內容
+        if (!noteInput.value.trim()) {
+            alert("Note is empty! (備註欄沒有內容)");
+            return;
+        }
+
+        // 嘗試使用現代的 Clipboard API (推薦)
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(noteInput.value)
+                .then(() => {
+                    // 成功回饋
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '✅ Copied!';
+                    copyBtn.style.backgroundColor = '#28a745';
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                        copyBtn.style.backgroundColor = '#6c757d'; // 恢復原始顏色
+                    }, 1500);
+                })
+                .catch(err => {
+                    // 如果 Clipboard API 失敗，退回使用傳統方法
+                    console.error('Clipboard API failed, falling back:', err);
+                    fallbackCopy(noteInput);
+                });
+        } else {
+            // 傳統方法 (舊瀏覽器或非安全環境)
+            fallbackCopy(noteInput);
+        }
+    }
+
+    function fallbackCopy(inputElement) {
+        inputElement.select(); // 選取文字
+        inputElement.setSelectionRange(0, 99999); // 適用於行動裝置
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                alert('Text copied successfully! (文字複製成功！)');
+            } else {
+                throw new Error('Fallback copy failed');
+            }
+        } catch (err) {
+            alert('Copy failed, please copy manually. (複製失敗，請手動選取複製)');
+        }
+        window.getSelection().removeAllRanges(); // 取消選取
+    }
+
     // ================= 上傳與檢視 =================
     function showStatus(type, title, subtitle) {
         const modal = document.getElementById('status-modal');
@@ -781,4 +839,3 @@
 
 </body>
 </html>
-
