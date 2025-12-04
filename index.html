@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MC-maintenance-check (機械查核保養)</title>
+    <title>5S-audit (重點事項紀錄)</title>
     <style>
         :root {
             --primary-color: #007bff;
@@ -177,8 +177,46 @@
         }
         .btn-voice.recording { background-color: var(--danger-color); animation: pulse 1s infinite; }
 
-        .footer-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; padding-bottom: 30px;}
-        .btn-main { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; color: white; }
+        /* ★★★ 修改主要按鈕容器為 Grid ★★★ */
+        .footer-btns { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); /* 兩欄佈局 */
+            gap: 15px; /* 加大間距 */
+            margin-top: 25px; 
+            padding-bottom: 30px;
+        }
+        
+        /* ★★★ 修改按鈕樣式為正方形和加大字體 ★★★ */
+        .btn-main { 
+            font-size: 1.25rem; /* 加大字體 */
+            aspect-ratio: 1 / 1; /* 強制正方形 */
+            padding: 0; /* 清除內距，讓 aspect-ratio 決定大小 */
+            height: auto; 
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.2; 
+            /* 覆寫其他潛在的 flex/width 衝突 */
+            width: auto !important; 
+            flex-grow: 0 !important;
+        }
+        
+        /* ★★★ 讓第三個按鈕獨佔一排 ★★★ */
+        .footer-btns button:nth-child(3) {
+            grid-column: 1 / span 2; /* 跨越兩欄 */
+        }
+        
+        /* 由於 .footer-btns 的樣式被更改，這裡要確保複製按鈕的樣式不被影響，或使用內聯樣式 */
+        .footer-btns.copy-btns { 
+             display: flex; 
+             flex-direction: row; 
+             gap: 10px; 
+             margin-top: 15px; 
+             padding-bottom: 0;
+        }
+
+
         .btn-save { background-color: var(--primary-color); }
         .btn-view { background-color: #6c757d; }
         .btn-drive { background-color: var(--drive-color); }
@@ -224,15 +262,30 @@
         </div>
     </div>
 
+    <div id="screenshot-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 450px; text-align: center;">
+            <h3 style="color:#007bff; margin-top:0;">📸 截圖/分享</h3>
+            <p style="font-size: 0.9em; color:#666;">(請長按下方圖片或使用手機截圖功能儲存)</p>
+            <img id="screenshot-display" style="max-width: 100%; height: auto; border: 4px solid #f0fff0; box-shadow: 0 0 10px rgba(0, 230, 0, 0.8); margin-bottom: 15px; border-radius: 8px;">
+            <button class="btn-main btn-view" style="background-color: #6c757d;" onclick="closeScreenshotModal()">關閉</button>
+        </div>
+    </div>
+
+
     <div id="app-screen">
         <div class="author-header">Author: DERER LIN</div>
 
         <div class="header">
             <div class="header-btn" onclick="logout()" title="Lock / Logout (鎖定/登出)">🔒</div>
             <div class="header-title">
-                <h2>MC-maintenance-check<br>機械查核保養</h2>
+                <h2>5S-audit<br>重點事項紀錄</h2>
             </div>
             <div class="header-btn" onclick="openSettings()" title="Settings (設定)">⚙️</div>
+        </div>
+
+        <div class="card">
+            <span class="section-title">0. Defect Worker ID (指摘工號/人員)</span>
+            <input type="text" id="workerIdInput" class="modal-input" placeholder="Enter Worker ID (請輸入工號)">
         </div>
 
         <div class="card">
@@ -253,13 +306,7 @@
         </div>
 
         <div class="card" id="note-card">
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span class="section-title" style="margin-bottom: 0;">2. Note (文字/語音)</span>
-                <button id="copyNoteBtn" onclick="copyNote()" class="btn-half btn-gallery" style="flex: unset; width: auto; padding: 6px 15px; background-color: #6c757d; font-size: 0.9em;">
-                    📋 複製 (Copy)
-                </button>
-            </div>
+            <span class="section-title">2. Note (文字/語音)</span>
             <textarea id="noteInput" placeholder="After taking a photo, type here or use voice... (拍照後，在此輸入或使用語音)"></textarea>
             
             <div class="voice-controls">
@@ -270,7 +317,7 @@
                         <option value="cmn-Hant-TW">中文 (繁體)</option>
                         <option value="en-US">English</option>
                         <option value="ja-JP">日本語</option>
-                        <option value="hi-IN">हिन्दी (Hindi)</option>
+                        <option value="hi-IN">Hindi (印地語)</option>
                     </select>
                 </div>
 
@@ -280,6 +327,11 @@
                 <div style="text-align: right; font-size: 0.9em; color: #555; margin-top: 8px; font-weight: bold;">
                     Time left: <span id="display-timeout" style="color:#d63384; font-size:1.1em;">10</span> s
                 </div>
+            </div>
+
+            <div class="footer-btns copy-btns">
+                <button class="btn-main btn-half" style="background-color: #008CBA; font-size: 14px; padding: 12px; width: 100%;" onclick="copyNote()">📋 複製文字</button>
+                <button class="btn-main btn-half" style="background-color: #ffc107; color:#333; font-size: 14px; padding: 12px; width: 100%;" onclick="captureScreenArea()">📸 截圖分享</button>
             </div>
         </div>
 
@@ -343,18 +395,16 @@
     </div>
 
 <script>
-    // ================= 初始化 =================
+    // ================= 初始化 & FIXED PATHS =================
     const DEFAULT_PASS = "1234"; 
     
-    // --- 這裡是你要求的寫死路徑 (FIXED PATHS) ---
-    const FIXED_SCRIPT_ID = "AKfycbzTDioUw8L5vZ9H3rUEB-df_sSmJ4kg86NFraktwmU4-qtiESh_u_tZPnyIsUOW9LaK/exec";
-    const FIXED_SHEET_ID = "1GcnAkIHAhnVjrH9bO9TQbdTUwQT17XtyQWUPh7WSTLA/edit?gid=0#gid=0";
-    const FIXED_FOLDER_ID = "1MCaCvWS73lyPd90yMXnDrD5BqiEw7O08";
+    const FIXED_SCRIPT_ID = "AKfycbwFOhOMBmkM-zyjQ_8bqfBQvNGsb5pbdH1DYC--lzXMmfNhJGHFWMxR5BFPm6acUk_I";
+    const FIXED_SHEET_ID = "1LkRGvju345Ve8R1WemsErdmC-KP1rxfHy_b7nvnJLZE"; 
+    const FIXED_FOLDER_ID = "1JiECr4vcpnJoroXW6aHLXWfWk41_B0Jp";
 
     let processedImageBase64 = ""; 
     let recognition;
     
-    // 錄音狀態
     let isRecording = false; 
     let isManualStop = false; 
     let voiceTimer = null; 
@@ -422,25 +472,6 @@
             document.getElementById('main-lang').value = val;
         }
         localStorage.setItem("cfg_lang", val);
-    }
-
-    // 雖然現在寫死了，但保留此函數以防未來需要
-    function extractId(input) {
-        if (!input) return "";
-        input = input.trim();
-        if (input.includes("script.google.com")) {
-            const match = input.match(/\/s\/([a-zA-Z0-9-_]+)\/exec/);
-            return match ? match[1] : input;
-        }
-        if (input.includes("docs.google.com")) {
-            const match = input.match(/\/d\/([a-zA-Z0-9-_]+)/);
-            return match ? match[1] : input;
-        }
-        if (input.includes("drive.google.com")) {
-            const match = input.match(/\/folders\/([a-zA-Z0-9-_]+)/);
-            return match ? match[1] : input;
-        }
-        return input;
     }
 
     function saveSettings() {
@@ -558,7 +589,7 @@
         }
     }
 
-    // ================= 語音功能 (修正：標點遺失問題) =================
+    // ================= 語音功能 =================
     function toggleVoice() {
         if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
             alert("Browser not supported"); return;
@@ -583,7 +614,6 @@
         document.getElementById('voiceBtn').classList.add('recording');
         document.getElementById('voiceBtn').innerText = "🛑 Stop";
         
-        // 建立快照
         snapshotText = document.getElementById('noteInput').value;
         if(snapshotText.length > 0 && !snapshotText.endsWith(" ")) {
             snapshotText += " ";
@@ -636,18 +666,15 @@
             
             if(currentSessionText.trim().length > 0) {
                 punctuationTimer = setTimeout(() => {
-                    // 計時器觸發：停頓1秒後切斷
                     recognition.stop(); 
                 }, 1000);
             }
         };
 
-        // 5. 強制不中斷 & 自動重啟邏輯 (含補標點)
         recognition.onend = function() {
             if(punctuationTimer) clearTimeout(punctuationTimer);
 
             if (isRecording && !isManualStop && timeLeft > 0) {
-                // 檢查是否需要補標點
                 let currentVal = document.getElementById('noteInput').value.trim();
                 if(currentVal.length > 0) {
                     const lastChar = currentVal.slice(-1);
@@ -660,7 +687,6 @@
                     }
                 }
 
-                // 更新快照
                 snapshotText = document.getElementById('noteInput').value;
                 if(snapshotText.length > 0 && !snapshotText.endsWith(" ")) {
                     snapshotText += " "; 
@@ -699,57 +725,40 @@
         document.getElementById('display-timeout').innerText = originalTime;
     }
 
-    // ================= 輔助功能：複製文字 (新功能) =================
-    function copyNote() {
-        const noteInput = document.getElementById('noteInput');
-        const copyBtn = document.getElementById('copyNoteBtn');
-        
-        // 檢查是否有文字內容
-        if (!noteInput.value.trim()) {
-            alert("Note is empty! (備註欄沒有內容)");
+    // ================= 複製/截圖功能 =================
+
+    function closeScreenshotModal() {
+        document.getElementById('screenshot-modal').style.display = 'none';
+    }
+
+    function captureScreenArea() {
+        if (!processedImageBase64) {
+            alert("No photo to capture! (沒有照片可以截圖)");
             return;
         }
 
-        // 嘗試使用現代的 Clipboard API (推薦)
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(noteInput.value)
-                .then(() => {
-                    // 成功回饋
-                    const originalText = copyBtn.innerHTML;
-                    copyBtn.innerHTML = '✅ Copied!';
-                    copyBtn.style.backgroundColor = '#28a745';
-                    
-                    setTimeout(() => {
-                        copyBtn.innerHTML = originalText;
-                        copyBtn.style.backgroundColor = '#6c757d'; // 恢復原始顏色
-                    }, 1500);
-                })
-                .catch(err => {
-                    // 如果 Clipboard API 失敗，退回使用傳統方法
-                    console.error('Clipboard API failed, falling back:', err);
-                    fallbackCopy(noteInput);
-                });
-        } else {
-            // 傳統方法 (舊瀏覽器或非安全環境)
-            fallbackCopy(noteInput);
-        }
-    }
+        const modal = document.getElementById('screenshot-modal');
+        const displayImg = document.getElementById('screenshot-display');
 
-    function fallbackCopy(inputElement) {
-        inputElement.select(); // 選取文字
-        inputElement.setSelectionRange(0, 99999); // 適用於行動裝置
+        displayImg.src = processedImageBase64;
         
-        try {
-            const successful = document.execCommand('copy');
-            if (successful) {
-                alert('Text copied successfully! (文字複製成功！)');
-            } else {
-                throw new Error('Fallback copy failed');
-            }
-        } catch (err) {
-            alert('Copy failed, please copy manually. (複製失敗，請手動選取複製)');
+        modal.style.display = 'flex';
+    }
+    
+    function copyNote() {
+        const note = document.getElementById('noteInput').value;
+        if (note.trim() === "") {
+            alert("Note is empty! (文字內容為空)");
+            return;
         }
-        window.getSelection().removeAllRanges(); // 取消選取
+        navigator.clipboard.writeText(note)
+            .then(() => {
+                showStatus('success', 'Copied!', '文字內容已複製到剪貼簿。您可以直接貼上或分享。');
+                setTimeout(() => { closeStatusModal(); }, 1800);
+            })
+            .catch(err => {
+                alert('Copy failed: ' + err + ' (請允許剪貼簿存取)');
+            });
     }
 
     // ================= 上傳與檢視 =================
@@ -777,22 +786,25 @@
 
     function saveToCloud() {
         const note = document.getElementById('noteInput').value;
+        const workerId = document.getElementById('workerIdInput').value; 
         
-        // --- 使用寫死的 Folder ID ---
         const folderId = FIXED_FOLDER_ID;
-        
-        // --- 使用寫死的 Script ID ---
         const scriptUrl = `https://script.google.com/macros/s/${FIXED_SCRIPT_ID}/exec`;
 
-        if(!processedImageBase64 && !note) {
-            alert("Empty! Please take a photo or write a note."); return;
+        if(!processedImageBase64 && !note && !workerId) {
+            alert("Empty! Please take a photo, write a note, or enter Worker ID."); return;
         }
 
         const btn = document.getElementById('saveBtn');
         btn.disabled = true;
         showStatus('loading', 'Uploading...', '資料上傳中...');
 
-        const data = { note: note, image: processedImageBase64, folderId: folderId };
+        const data = { 
+            note: note, 
+            image: processedImageBase64, 
+            folderId: folderId,
+            workerId: workerId 
+        };
 
         fetch(scriptUrl, {
             method: 'POST',
@@ -802,6 +814,7 @@
         .then(res => {
             showStatus('success', 'Upload Success!', '上傳成功！');
             document.getElementById('noteInput').value = "";
+            document.getElementById('workerIdInput').value = ""; 
             processedImageBase64 = "";
             document.getElementById('preview-img').style.display = 'none';
             document.querySelector('.placeholder').style.display = 'block';
@@ -818,18 +831,15 @@
     }
 
     function viewExcel() {
-        // --- 使用寫死的 Sheet ID ---
         const url = `https://docs.google.com/spreadsheets/d/${FIXED_SHEET_ID}/edit`;
         window.open(url, '_blank');
     }
 
     function viewDriveFolder() {
-        // --- 使用寫死的 Folder ID ---
         const folderId = FIXED_FOLDER_ID;
         if(folderId && folderId.trim() !== "") {
             window.open("https://drive.google.com/drive/folders/" + folderId, '_blank');
         } else {
-            // Fallback (理論上不會發生，因為已經寫死 ID 了)
             if(confirm("Folder ID not set. Open Google Drive Root?\n(尚未設定資料夾 ID，要開啟雲端硬碟根目錄嗎？)")) {
                 window.open("https://drive.google.com/drive/my-drive", '_blank');
             }
