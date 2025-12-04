@@ -177,11 +177,61 @@
         }
         .btn-voice.recording { background-color: var(--danger-color); animation: pulse 1s infinite; }
 
-        .footer-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; padding-bottom: 30px;}
-        .btn-main { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; color: white; }
+        /* --- 修改後的下方按鈕區 (Grid Layout + Square Buttons) --- */
+        .footer-btns { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; /* 兩個一排 */
+            gap: 15px; 
+            margin-top: 20px; 
+            padding-bottom: 50px;
+        }
+        .btn-main { 
+            width: 100%; 
+            border: none; 
+            border-radius: 16px; 
+            font-size: 1.3rem; /* 字體加大 */
+            font-weight: bold; 
+            cursor: pointer; 
+            color: white; 
+            
+            /* 讓內容垂直堆疊並置中 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.3;
+            padding: 10px;
+            
+            /* 正方形設定 */
+            aspect-ratio: 1 / 1; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-main span.icon-large {
+            font-size: 2.2rem; /* 圖示更大 */
+            margin-bottom: 5px;
+            display: block;
+        }
+        .btn-main span.text-sub {
+            font-size: 0.8rem;
+            font-weight: normal;
+            opacity: 0.9;
+            display: block;
+            margin-top: 2px;
+        }
+        
         .btn-save { background-color: var(--primary-color); }
         .btn-view { background-color: #6c757d; }
-        .btn-drive { background-color: var(--drive-color); }
+        
+        /* 讓第三個按鈕橫跨兩欄，變成寬版 (看起來比較協調) */
+        .btn-drive { 
+            background-color: var(--drive-color);
+            grid-column: span 2; 
+            aspect-ratio: auto; /* 不需要正方形 */
+            padding: 18px;
+            flex-direction: row; /* 橫向排列 */
+            gap: 10px;
+        }
 
         /* --- 設定彈窗 --- */
         #settings-modal {
@@ -210,7 +260,7 @@
             <h3>🔒 Login (登入)</h3>
             <p style="color:#666; font-size:0.9em;">Please enter password<br>(請輸入密碼)</p>
             <input type="password" id="loginPass" class="login-input" placeholder="Password">
-            <button class="btn-main btn-save" onclick="checkLogin()">Login (進入)</button>
+            <button class="btn-main btn-save" style="aspect-ratio: auto; padding:15px; flex-direction:row;" onclick="checkLogin()">Login (進入)</button>
         </div>
     </div>
 
@@ -278,9 +328,21 @@
         </div>
 
         <div class="footer-btns">
-            <button class="btn-main btn-save" id="saveBtn" onclick="saveToCloud()">💾 Save to Cloud (存檔至雲端)</button>
-            <button class="btn-main btn-view" onclick="viewExcel()">📊 View Excel (檢視 Excel)</button>
-            <button class="btn-main btn-drive" onclick="viewDriveFolder()">📂 View Photos (檢視雲端照片)</button>
+            <button class="btn-main btn-save" id="saveBtn" onclick="saveToCloud()">
+                <span class="icon-large">💾</span>
+                Save
+                <span class="text-sub">(存檔)</span>
+            </button>
+            
+            <button class="btn-main btn-view" onclick="viewExcel()">
+                <span class="icon-large">📊</span>
+                Excel
+                <span class="text-sub">(檢視)</span>
+            </button>
+            
+            <button class="btn-main btn-drive" onclick="viewDriveFolder()">
+                <span style="font-size:1.5rem;">📂</span> View Photos (檢視雲端照片)
+            </button>
         </div>
     </div>
 
@@ -332,7 +394,7 @@
                 <p>✅ Cloud Paths are Locked (System Mode)</p>
             </div>
 
-            <button class="btn-main btn-save" onclick="saveSettings()">Save Settings (儲存設定)</button>
+            <button class="btn-main btn-save" style="aspect-ratio: auto; padding: 15px; flex-direction:row;" onclick="saveSettings()">Save Settings (儲存設定)</button>
         </div>
     </div>
 
@@ -341,9 +403,9 @@
     const DEFAULT_PASS = "1234"; 
     
     // --- 這裡是你要求的寫死路徑 (FIXED PATHS) ---
-    // 我已經將你提供的連結轉換成對應的 ID 並固定於此。
     const FIXED_SCRIPT_ID = "AKfycbzTDioUw8L5vZ9H3rUEB-df_sSmJ4kg86NFraktwmU4-qtiESh_u_tZPnyIsUOW9LaK/exec";
-    const FIXED_SHEET_ID = "1GcnAkIHAhnVjrH9bO9TQbdTUwQT17XtyQWUPh7WSTLA/edit?gid=0#gid=0";
+    // [重要修正] 這裡只保留 ID 本體
+    const FIXED_SHEET_ID = "1GcnAkIHAhnVjrH9bO9TQbdTUwQT17XtyQWUPh7WSTLA";
     const FIXED_FOLDER_ID = "1MCaCvWS73lyPd90yMXnDrD5BqiEw7O08";
 
     let processedImageBase64 = ""; 
@@ -352,8 +414,8 @@
     // 錄音狀態
     let isRecording = false; 
     let isManualStop = false; 
-    let voiceTimer = null;          
-    let countdownInterval = null;   
+    let voiceTimer = null;           
+    let countdownInterval = null;    
     let punctuationTimer = null; 
     let timeLeft = 0; 
     let snapshotText = ""; 
@@ -417,25 +479,6 @@
             document.getElementById('main-lang').value = val;
         }
         localStorage.setItem("cfg_lang", val);
-    }
-
-    // 雖然現在寫死了，但保留此函數以防未來需要
-    function extractId(input) {
-        if (!input) return "";
-        input = input.trim();
-        if (input.includes("script.google.com")) {
-            const match = input.match(/\/s\/([a-zA-Z0-9-_]+)\/exec/);
-            return match ? match[1] : input;
-        }
-        if (input.includes("docs.google.com")) {
-            const match = input.match(/\/d\/([a-zA-Z0-9-_]+)/);
-            return match ? match[1] : input;
-        }
-        if (input.includes("drive.google.com")) {
-            const match = input.match(/\/folders\/([a-zA-Z0-9-_]+)/);
-            return match ? match[1] : input;
-        }
-        return input;
     }
 
     function saveSettings() {
@@ -556,7 +599,7 @@
     // ================= 語音功能 (修正：標點遺失問題) =================
     function toggleVoice() {
         if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-            alert("Browser not supported"); return;
+            alert("Browser not supported (請使用 Chrome/Android)"); return;
         }
         if (isRecording) {
             manualStopVoice(); 
@@ -719,11 +762,7 @@
 
     function saveToCloud() {
         const note = document.getElementById('noteInput').value;
-        
-        // --- 使用寫死的 Folder ID ---
         const folderId = FIXED_FOLDER_ID;
-        
-        // --- 使用寫死的 Script ID ---
         const scriptUrl = `https://script.google.com/macros/s/${FIXED_SCRIPT_ID}/exec`;
 
         if(!processedImageBase64 && !note) {
@@ -760,18 +799,15 @@
     }
 
     function viewExcel() {
-        // --- 使用寫死的 Sheet ID ---
         const url = `https://docs.google.com/spreadsheets/d/${FIXED_SHEET_ID}/edit`;
         window.open(url, '_blank');
     }
 
     function viewDriveFolder() {
-        // --- 使用寫死的 Folder ID ---
         const folderId = FIXED_FOLDER_ID;
         if(folderId && folderId.trim() !== "") {
             window.open("https://drive.google.com/drive/folders/" + folderId, '_blank');
         } else {
-            // Fallback (理論上不會發生，因為已經寫死 ID 了)
             if(confirm("Folder ID not set. Open Google Drive Root?\n(尚未設定資料夾 ID，要開啟雲端硬碟根目錄嗎？)")) {
                 window.open("https://drive.google.com/drive/my-drive", '_blank');
             }
@@ -781,4 +817,3 @@
 
 </body>
 </html>
-
