@@ -166,24 +166,63 @@
         .anim-purple { animation: flash-purple 1s infinite; }
         .anim-green { animation: flash-green 2s infinite; }
 
-        .voice-controls { margin-top: 10px; }
+        /* --- 修正後的語音控制區 --- */
+        .voice-controls {
+            margin-top: 10px;
+            display: flex; /* 橫向排列 */
+            gap: 15px;     /* 元件間距 */
+            align-items: center;
+        }
+        
+        /* 正方形錄音按鈕 */
+        .btn-voice { 
+            width: 90px;
+            height: 90px;
+            padding: 5px;
+            border: none;
+            border-radius: 12px;
+            background-color: #17a2b8;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column; /* 垂直排列 Icon 和文字 */
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0; /* 防止被擠壓 */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+        .btn-voice:active { transform: scale(0.95); }
+        .btn-voice.recording { background-color: var(--danger-color); animation: pulse 1s infinite; }
+
+        /* 按鈕內部的樣式 */
+        .voice-icon-large { font-size: 2rem; margin-bottom: 5px; display: block; }
+        .voice-text-small { font-size: 0.8rem; line-height: 1.2; text-align: center; display: block; }
+
+        /* 右側面板 (語言 + 倒數) */
+        .voice-right-panel {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-end; /* 靠右對齊 */
+            gap: 10px;
+            height: 90px; /* 與按鈕等高 */
+        }
         
         .quick-lang-container {
-            display: flex; justify-content: flex-end; align-items: center;
-            margin-bottom: 5px;
+            display: flex; align-items: center;
         }
         .lang-icon { font-size: 1.2em; margin-right: 5px; }
         .small-select {
             padding: 4px 8px; border: 1px solid #ccc; border-radius: 15px; 
             font-size: 0.8rem; background-color: #fff; color: #555; outline: none;
         }
-
-        .btn-voice { 
-            width: 100%; padding: 12px; border: none; border-radius: 8px; 
-            background-color: #17a2b8; color: white; font-weight: bold; cursor: pointer;
-            display: flex; justify-content: center; align-items: center; gap: 8px;
+        
+        .timer-display-box {
+            text-align: right; font-size: 0.9em; color: #555; font-weight: bold;
         }
-        .btn-voice.recording { background-color: var(--danger-color); animation: pulse 1s infinite; }
 
         /* --- 下方按鈕區 --- */
         .footer-btns { 
@@ -315,22 +354,25 @@
             <textarea id="noteInput" placeholder="After taking a photo, type here or use voice... (拍照後，在此輸入或使用語音)"></textarea>
             
             <div class="voice-controls">
-                
-                <div class="quick-lang-container">
-                    <span class="lang-icon">🌐</span>
-                    <select id="main-lang" class="small-select" onchange="syncLanguage('main')">
-                        <option value="cmn-Hant-TW">中文 (繁體)</option>
-                        <option value="en-US">English</option>
-                        <option value="ja-JP">日本語</option>
-                        <option value="hi-IN">हिन्दी (Hindi)</option>
-                    </select>
-                </div>
-
                 <button type="button" class="btn-voice" id="voiceBtn" onclick="toggleVoice()">
-                    🎤 Start Voice (開始錄音)
+                    <span class="voice-icon-large">🎤</span>
+                    <span class="voice-text-small">Start<br>開始錄音</span>
                 </button>
-                <div style="text-align: right; font-size: 0.9em; color: #555; margin-top: 8px; font-weight: bold;">
-                    Time left: <span id="display-timeout" style="color:#d63384; font-size:1.1em;">10</span> s
+
+                <div class="voice-right-panel">
+                    <div class="quick-lang-container">
+                        <span class="lang-icon">🌐</span>
+                        <select id="main-lang" class="small-select" onchange="syncLanguage('main')">
+                            <option value="cmn-Hant-TW">中文 (繁體)</option>
+                            <option value="en-US">English</option>
+                            <option value="ja-JP">日本語</option>
+                            <option value="hi-IN">हिन्दी (Hindi)</option>
+                        </select>
+                    </div>
+
+                    <div class="timer-display-box">
+                        Time left: <span id="display-timeout" style="color:#d63384; font-size:1.4em; min-width:30px; display:inline-block;">10</span> s
+                    </div>
                 </div>
             </div>
         </div>
@@ -421,8 +463,8 @@
     // 錄音狀態
     let isRecording = false; 
     let isManualStop = false; 
-    let voiceTimer = null;           
-    let countdownInterval = null;    
+    let voiceTimer = null;            
+    let countdownInterval = null;     
     let punctuationTimer = null; 
     let timeLeft = 0; 
     let snapshotText = ""; 
@@ -632,7 +674,9 @@
         isRecording = true;
         isManualStop = false; 
         document.getElementById('voiceBtn').classList.add('recording');
-        document.getElementById('voiceBtn').innerText = "🛑 Stop";
+        
+        // 更新按鈕內容為停止狀態
+        document.getElementById('voiceBtn').innerHTML = '<span class="voice-icon-large">🛑</span><span class="voice-text-small">Stop<br>停止</span>';
         
         snapshotText = document.getElementById('noteInput').value;
         if(snapshotText.length > 0 && !snapshotText.endsWith(" ")) {
@@ -735,7 +779,9 @@
         if(punctuationTimer) clearTimeout(punctuationTimer);
         
         document.getElementById('voiceBtn').classList.remove('recording');
-        document.getElementById('voiceBtn').innerText = "🎤 Start Voice (開始錄音)";
+        
+        // 恢復按鈕內容為開始狀態
+        document.getElementById('voiceBtn').innerHTML = '<span class="voice-icon-large">🎤</span><span class="voice-text-small">Start<br>開始錄音</span>';
         
         const noteInput = document.getElementById('noteInput');
         noteInput.classList.remove('anim-red', 'anim-purple', 'anim-green');
