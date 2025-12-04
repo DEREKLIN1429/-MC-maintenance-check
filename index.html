@@ -186,7 +186,16 @@
             padding-bottom: 30px;
         }
         
-        /* ★★★ 修改按鈕樣式為正方形和加大字體 ★★★ */
+        /* ★★★ 複製按鈕容器的 Grid 佈局 (新増) ★★★ */
+        .footer-btns.copy-btns { 
+             display: grid; /* 變更為 Grid */
+             grid-template-columns: repeat(2, 1fr); /* 兩欄佈局 */
+             gap: 15px; /* 與主要按鈕保持一致 */
+             margin-top: 15px; 
+             padding-bottom: 0;
+        }
+        
+        /* ★★★ 修改所有 .btn-main 樣式為正方形和加大字體 ★★★ */
         .btn-main { 
             font-size: 1.25rem; /* 加大字體 */
             aspect-ratio: 1 / 1; /* 強制正方形 */
@@ -202,20 +211,11 @@
             flex-grow: 0 !important;
         }
         
-        /* ★★★ 讓第三個按鈕獨佔一排 ★★★ */
-        .footer-btns button:nth-child(3) {
+        /* ★★★ 讓主要 footer 的第三個按鈕獨佔一排 ★★★ */
+        .footer-btns:not(.copy-btns) button:nth-child(3) {
             grid-column: 1 / span 2; /* 跨越兩欄 */
         }
         
-        /* 由於 .footer-btns 的樣式被更改，這裡要確保複製按鈕的樣式不被影響，或使用內聯樣式 */
-        .footer-btns.copy-btns { 
-             display: flex; 
-             flex-direction: row; 
-             gap: 10px; 
-             margin-top: 15px; 
-             padding-bottom: 0;
-        }
-
 
         .btn-save { background-color: var(--primary-color); }
         .btn-view { background-color: #6c757d; }
@@ -330,8 +330,8 @@
             </div>
 
             <div class="footer-btns copy-btns">
-                <button class="btn-main btn-half" style="background-color: #008CBA; font-size: 14px; padding: 12px; width: 100%;" onclick="copyNote()">📋 複製文字</button>
-                <button class="btn-main btn-half" style="background-color: #ffc107; color:#333; font-size: 14px; padding: 12px; width: 100%;" onclick="captureScreenArea()">📸 截圖分享</button>
+                <button class="btn-main btn-half" style="background-color: #008CBA;" onclick="copyNote()">📋 複製文字</button>
+                <button class="btn-main btn-half" style="background-color: #ffc107; color:#333;" onclick="captureScreenArea()">📸 截圖分享</button>
             </div>
         </div>
 
