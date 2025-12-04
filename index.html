@@ -1,535 +1,784 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Machine-NG (重點事項紀錄)</title>
+    <title>MC-maintenance-check (重點事項紀錄)</title>
     <style>
         :root {
-            --primary-color: #4CAF50; --bg-color: #f7f9fc; --card-bg: #ffffff;
-            --danger-color: #e53935; --copy-color: #FF9800; --view-color: #212121;
-            --frame-color: #4CAF50; --input-border: #ddd;
-            --setting-color: #607D8B; /* 設定按鈕顏色 */
+            --primary-color: #007bff;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --danger-color: #dc3545;
+            --drive-color: #198754; 
+            --frame-color: #00e600; 
         }
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: var(--bg-color); margin: 0; padding: 0;
-            display: flex; justify-content: center; min-height: 100vh;
+            background-color: var(--bg-color); 
+            margin: 0; padding: 0;
+            display: flex; justify-content: center; height: 100vh;
         }
-        #login-screen, #status-modal, #settings-modal {
+
+        #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 9999;
-            display: none; align-items: center; justify-content: center;
+            background: var(--bg-color); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        #login-screen { background: var(--bg-color); }
-        .modal-box {
-            background: white; padding: 25px; border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 450px;
-            max-height: 90vh; overflow-y: auto; 
+        .login-box {
+            background: white; padding: 30px; border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; width: 80%; max-width: 300px;
         }
         .login-input {
-            width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; 
-            border-radius: 8px; font-size: 16px; text-align: left; box-sizing: border-box;
+            width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #ddd;
+            border-radius: 8px; font-size: 18px; text-align: center;
         }
+
+        #status-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center;
+        }
+        .status-box {
+            background: white; padding: 25px; border-radius: 12px; width: 80%; max-width: 280px;
+            text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .status-icon { font-size: 40px; margin-bottom: 15px; display: block; }
         .spinner {
             border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color);
             border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite;
             margin: 0 auto 15px auto;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #app-screen { width: 100%; max-width: 500px; padding: 10px; box-sizing: border-box; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .header-btn { 
-            font-size: 24px; cursor: pointer; color: #555; padding: 6px; 
-            border-radius: 50%; transition: background 0.2s; width: 36px; height: 36px; 
-            display: flex; align-items: center; justify-content: center;
+        #status-close-btn {
+            background: var(--primary-color); color: white; border: none; padding: 8px 20px;
+            border-radius: 5px; margin-top: 15px; cursor: pointer; display: none; font-size: 16px;
         }
-        .header-title h2 { margin: 0; color: #333; font-size: 1.2rem; line-height: 1.4; }
-        .card { background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 12px; }
-        .section-title { font-weight: bold; color: #555; margin-bottom: 8px; display: block; font-size: 1rem; }
-        .photo-controls { display: flex; gap: 10px; margin-bottom: 10px; }
-        .btn-half { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 5px;}
-        .btn-cam { background-color: #FF5722; color: white; } 
-        .btn-gallery { background-color: #FFC107; color: #333; } 
-        #preview-container {
-            max-width: 100%; height: auto; position: relative; display: flex; justify-content: center; align-items: center; overflow: hidden;
-            background: #e0e0e0; border-radius: 8px; min-height: 150px; 
-        }
-        .ratio-4-3 { aspect-ratio: 4 / 3; } .ratio-16-9 { aspect-ratio: 16 / 9; } .ratio-9-16 { aspect-ratio: 9 / 16; } .ratio-1-1 { aspect-ratio: 1 / 1; }
-        #preview-container .placeholder { position: absolute; color: #666; font-size: 1.1em; font-weight: bold; text-align: center; }
-        #preview-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: cover; display: none; }
-        #ratio-display-tag { position: absolute; bottom: 5px; right: 5px; background: rgba(0,0,0,0.6); color: white; padding: 2px 5px; border-radius: 4px; font-size: 0.7rem; z-index: 10; }
-        .input-group { margin-bottom: 8px; display: flex; flex-direction: column; }
-        .input-label { font-weight: bold; font-size: 0.9rem; color: #333; margin-bottom: 4px; }
-        .text-input, textarea, select.text-input { 
-            width: 100%; padding: 10px; border: 1px solid var(--input-border); 
-            border-radius: 6px; font-size: 15px; box-sizing: border-box; font-family: inherit; transition: border-color 0.3s;
-        }
-        textarea { height: 80px; resize: vertical; } 
-        .time-component { display: flex; flex-direction: column; margin-bottom: 8px; }
-        .time-input-row { display: flex; align-items: center; gap: 5px; }
-        .btn-update-time { padding: 10px 12px; border: none; background-color: #00bcd4; color: white; border-radius: 6px; cursor: pointer; font-weight: bold; line-height: 1; }
-        
-        .total-time-input-group { display: flex; gap: 5px; align-items: center; }
-        .total-time-input-group #input-total-time { flex-grow: 1; }
-        .total-time-input-group .btn-calc { padding: 10px; background: #607D8B; color: white; border: none; border-radius: 6px; cursor: pointer; }
-        .total-time-input-group #total-time-unit { width: 75px !important; }
-        
-        /* --- 底部按鈕群組修正：5個按鈕，2排，正方形 --- */
-        .footer-btns { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; /* 2 個按鈕一排 */
-            gap: 12px; 
-            margin-top: 20px; 
-            padding-bottom: 30px;
-        }
-        .btn-main { 
-            width: 100%; 
-            aspect-ratio: 1 / 1; /* 正方形 */
-            padding: 5px; 
-            border: none; 
-            border-radius: 12px; 
-            font-size: 22px; /* 字體加大 */
-            font-weight: 800; 
-            cursor: pointer; 
-            color: white; 
-            transition: background 0.2s, transform 0.1s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            line-height: 1.1;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .btn-main:active { transform: scale(0.98); }
-        .btn-save { background-color: var(--primary-color); } 
-        .btn-copy { background-color: var(--copy-color); }
-        .btn-view { background-color: #03A9F4; } 
-        .btn-drive { background-color: #795548; }
-        .btn-settings { background-color: var(--setting-color); } /* 新增設定按鈕樣式 */
 
-        /* --- 最近紀錄列表樣式 --- */
-        #recent-records-container { margin-top: 20px; padding: 15px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        #recent-records-container h4 {
-            margin: 0 0 10px 0; color: var(--view-color); border-bottom: 1px solid #eee; padding-bottom: 8px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .record-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; cursor: pointer; border-bottom: 1px dashed #f0f0f0; transition: background-color 0.2s; }
-        .record-item:last-child { border-bottom: none; } .record-item:hover { background-color: #f9f9f9; }
-        .record-item .main-info-group { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; width: 45%; }
-        .record-item .form-no-display { font-weight: bold; color: var(--copy-color); font-size: 1.1em; }
-        .record-item .stop-time-display { font-weight: bold; color: #333; font-size: 0.9em; }
-        .record-item .details { font-size: 0.85rem; color: #777; text-align: right; line-height: 1.4; width: 55%; }
+        #app-screen { display: none; width: 100%; max-width: 500px; height: 100%; overflow-y: auto; padding: 20px; box-sizing: border-box; }
         
+        .author-header {
+            text-align: center; font-size: 0.75rem; color: #999; padding-bottom: 10px;
+            letter-spacing: 1px; font-weight: 500;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        
+        .header-btn { 
+            font-size: 26px; cursor: pointer; color: #555; padding: 8px; 
+            border-radius: 50%; transition: background 0.2s, color 0.2s;
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+        }
+        .header-btn:active { background: #e9ecef; }
+        
+        .header-title { text-align: center; flex-grow: 1; }
+        .header-title h2 { margin: 0; color: #333; font-size: 1.3rem; line-height: 1.4; }
+        .header-title span { font-size: 0.85em; color: #666; font-weight: normal; }
+
+        .card { background: var(--card-bg); padding: 20px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .section-title { font-weight: bold; color: #555; margin-bottom: 10px; display: block; font-size: 1rem; }
+
+        .photo-controls { display: flex; gap: 10px; margin-bottom: 10px; }
+        .btn-half { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 5px;}
+        .btn-cam { background-color: #ffc107; color: #333; }
+        .btn-gallery { background-color: #fd7e14; }
+
+        #preview-container { 
+            width: 100%; 
+            background: #f0fff0; 
+            border: 2px solid var(--frame-color);
+            border-radius: 8px; 
+            display: flex; align-items: center; justify-content: center; 
+            overflow: hidden;
+            position: relative;
+            box-sizing: border-box;
+            transition: aspect-ratio 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 230, 0, 0.15);
+            cursor: pointer;
+        }
+        #preview-container:active { opacity: 0.8; }
+
+        #preview-container::after {
+            content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            border: 4px solid transparent;
+            background: 
+                linear-gradient(to right, var(--frame-color) 4px, transparent 4px) 0 0,
+                linear-gradient(to bottom, var(--frame-color) 4px, transparent 4px) 0 0,
+                linear-gradient(to left, var(--frame-color) 4px, transparent 4px) 100% 0,
+                linear-gradient(to bottom, var(--frame-color) 4px, transparent 4px) 100% 0,
+                linear-gradient(to right, var(--frame-color) 4px, transparent 4px) 0 100%,
+                linear-gradient(to top, var(--frame-color) 4px, transparent 4px) 0 100%,
+                linear-gradient(to left, var(--frame-color) 4px, transparent 4px) 100% 100%,
+                linear-gradient(to top, var(--frame-color) 4px, transparent 4px) 100% 100%;
+            background-repeat: no-repeat; background-size: 20px 20px; pointer-events: none; margin: 5px;
+        }
+        
+        .ratio-4-3 { aspect-ratio: 4/3; }
+        .ratio-16-9 { aspect-ratio: 16/9; }
+        .ratio-9-16 { aspect-ratio: 9/16; }
+        .ratio-1-1 { aspect-ratio: 1/1; }
+        .ratio-full { aspect-ratio: 9/16; }
+        
+        .ratio-tag {
+            position: absolute; top: 10px; left: 10px;
+            background: var(--frame-color); color: #000; font-weight: bold;
+            padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; pointer-events: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        #preview-img { width: 100%; height: 100%; object-fit: contain; display: none; z-index: 1; }
+        .placeholder { color: #555; text-align: center; font-size: 0.9em; z-index: 0; font-weight: 500;}
+
+        textarea { 
+            width: 100%; height: 220px; padding: 12px; border: 2px solid #eee; 
+            border-radius: 8px; font-size: 16px; box-sizing: border-box; resize: none; font-family: inherit;
+            transition: border 0.3s;
+        }
+        textarea:focus { border-color: var(--primary-color); outline: none; }
+        
+        /* --- 三階段閃爍動畫 --- */
+        @keyframes flash-red {
+            0% { border-color: #eee; box-shadow: none; background-color: white; }
+            50% { border-color: red; box-shadow: 0 0 15px rgba(255,0,0,0.6); background-color: #fff0f0; }
+            100% { border-color: #eee; box-shadow: none; background-color: white; }
+        }
+        
+        @keyframes flash-purple {
+            0% { border-color: #eee; box-shadow: none; background-color: white; }
+            50% { border-color: #a020f0; box-shadow: 0 0 10px rgba(160,32,240,0.4); background-color: #fcf0ff; }
+            100% { border-color: #eee; box-shadow: none; background-color: white; }
+        }
+
+        @keyframes flash-green {
+            0% { border-color: #eee; box-shadow: none; }
+            50% { border-color: #28a745; box-shadow: 0 0 8px rgba(40,167,69,0.3); }
+            100% { border-color: #eee; box-shadow: none; }
+        }
+
+        .anim-red { animation: flash-red 0.5s infinite; }
+        .anim-purple { animation: flash-purple 1s infinite; }
+        .anim-green { animation: flash-green 2s infinite; }
+
+        .voice-controls { margin-top: 10px; }
+        
+        .quick-lang-container {
+            display: flex; justify-content: flex-end; align-items: center;
+            margin-bottom: 5px;
+        }
+        .lang-icon { font-size: 1.2em; margin-right: 5px; }
+        .small-select {
+            padding: 4px 8px; border: 1px solid #ccc; border-radius: 15px; 
+            font-size: 0.8rem; background-color: #fff; color: #555; outline: none;
+        }
+
+        .btn-voice { 
+            width: 100%; padding: 12px; border: none; border-radius: 8px; 
+            background-color: #17a2b8; color: white; font-weight: bold; cursor: pointer;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        .btn-voice.recording { background-color: var(--danger-color); animation: pulse 1s infinite; }
+
+        .footer-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; padding-bottom: 30px;}
+        .btn-main { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; color: white; }
+        .btn-save { background-color: var(--primary-color); }
+        .btn-view { background-color: #6c757d; }
+        .btn-drive { background-color: var(--drive-color); }
+
+        /* --- 設定彈窗 --- */
+        #settings-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; width: 90%; max-width: 400px; padding: 25px; 
+            border-radius: 15px; max-height: 85vh; overflow-y: auto;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;}
+        .modal-group { margin-bottom: 15px; }
+        .modal-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; color: #333; }
+        .modal-input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem;}
+        select.modal-input { background: white; }
+        .hint-text { font-size: 0.8rem; color: #888; margin-top: 3px; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
         .hidden { display: none !important; }
-        .btn-voice.recording { background-color: var(--danger-color); color: white; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
-    <div id="login-screen" style="display: none;">
-        <div class="modal-box">
+
+    <div id="login-screen">
+        <div class="login-box">
             <h3>🔒 Login (登入)</h3>
-            <p style="color:#666; font-size:0.9em;">Default Password: 12345<br>(請輸入密碼)</p>
+            <p style="color:#666; font-size:0.9em;">Please enter password<br>(請輸入密碼)</p>
             <input type="password" id="loginPass" class="login-input" placeholder="Password">
             <button class="btn-main btn-save" onclick="checkLogin()">Login (進入)</button>
         </div>
     </div>
-    <div id="status-modal" style="display: none;">
-        <div class="modal-box">
+
+    <div id="status-modal">
+        <div class="status-box">
             <div id="status-spinner" class="spinner"></div>
-            <div id="status-icon" class="status-icon" style="display:none; font-size: 40px;"></div>
+            <div id="status-icon" class="status-icon" style="display:none;"></div>
             <h3 id="status-text" style="color:#333; margin:0;">Uploading...</h3>
             <p id="status-subtext" style="color:#666; font-size:0.9em; margin-top:5px;">(資料上傳中...)</p>
-            <button id="status-close-btn" onclick="closeStatusModal()" class="btn-main btn-view" style="margin-top: 15px; display: none;">OK</button>
-        </div>
-    </div>
-    <div id="settings-modal" style="display: none;">
-        <div class="modal-box">
-            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                <h3>Settings (設定)</h3>
-                <button onclick="closeSettings()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            <div class="settings-content-group">
-                <div class="modal-group" style="background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ccc;">
-                    <label style="color:#d63384; font-weight: bold; margin-bottom: 5px; display: block;">🔑 Login Password</label>
-                    <input type="text" id="set-password" class="login-input" style="margin: 0;" placeholder="Current: 12345">
-                </div>
-                <div class="modal-group">
-                    <label style="font-weight: bold; margin-bottom: 5px; display: block;">1. Voice Timeout (秒)</label>
-                    <input type="number" id="set-timeout" class="login-input" style="margin: 0;" placeholder="Default: 1.5">
-                </div>
-                <div class="modal-group">
-                    <label style="font-weight: bold; margin-bottom: 5px; display: block;">2. Photo Ratio</label>
-                    <select id="set-ratio" class="login-input" style="margin: 0;">
-                        <option value="4/3">4:3</option><option value="16/9">16:9</option><option value="9/16">9:16</option><option value="1/1">1:1</option>
-                    </select>
-                </div>
-                <div class="modal-group">
-                    <label style="font-weight: bold; margin-bottom: 5px; display: block;">3. Recent Records Limit (顯示筆數)</label>
-                    <input type="number" id="set-recent-limit" class="login-input" style="margin: 0;" placeholder="Default: 5" min="1" max="30">
-                </div>
-                <div class="modal-group">
-                    <label style="font-weight: bold; margin-bottom: 5px; display: block;">4. Voice Language</label>
-                    <select id="set-lang" class="login-input" style="margin: 0;" onchange="syncLanguage()">
-                        <option value="cmn-Hant-TW">Chinese (TW)</option><option value="en-US">English</option><option value="ja-JP">Japanese</option><option value="hi-IN">Hindi</option>
-                    </select>
-                </div>
-                <div class="modal-group" style="border: 1px solid #ddd; padding: 10px; border-radius: 8px;">
-                    <label style="font-weight: bold; margin-bottom: 10px; display: block;">5. Concern Section List</label>
-                    <input type="text" id="new-concern-section" class="login-input" style="margin: 0 0 5px 0;" placeholder="Add section">
-                    <button type="button" class="btn-add-item" onclick="addConcernSection()">+ Add</button>
-                    <div id="concern-section-list-container"></div>
-                </div>
-                <div class="modal-group" style="border: 1px solid #ddd; padding: 10px; border-radius: 8px;">
-                    <label style="font-weight: bold; margin-bottom: 10px; display: block;">6. Machine List</label>
-                    <input type="text" id="new-machine-name" class="login-input" style="margin: 0 0 5px 0;" placeholder="Add machine">
-                    <button type="button" class="btn-add-item" onclick="addMachine()">+ Add</button>
-                    <div id="machine-list-container"></div>
-                </div>
-            </div>
-            <button class="btn-main btn-save" onclick="saveSettings()" style="margin-top:15px;">Save Settings</button>
+            <button id="status-close-btn" onclick="closeStatusModal()">OK</button>
         </div>
     </div>
 
-    <div id="app-screen" style="display: none;">
-        <div class="author-header">Author: DERER LIN (v4.4 - 5 Buttons)</div>
+    <div id="app-screen">
+        <div class="author-header">Author: DERER LIN</div>
+
         <div class="header">
-            <div class="header-btn" onclick="logout()" title="Logout">🔒</div>
-            <div class="header-title"><h2>Machine-NG<br>重點事項紀錄</h2></div>
-            <div class="header-btn" onclick="openSettings()" title="Settings">⚙️</div>
-        </div>
-        <div class="input-group">
-            <label class="input-label">Employee ID:</label>
-            <input type="text" id="input-employee-id" class="text-input" placeholder="儲存後不會清除">
-        </div>
-        <div class="card">
-            <span class="section-title">1. Photo</span>
-            <div class="photo-controls">
-                <button class="btn-half btn-cam" onclick="triggerFile('input-cam')">📷 Camera</button>
-                <button class="btn-half btn-gallery" onclick="triggerFile('input-gallery')">🖼️ Gallery</button>
+            <div class="header-btn" onclick="logout()" title="Lock / Logout (鎖定/登出)">🔒</div>
+            <div class="header-title">
+                <h2>MC-maintenance-check<br>重點事項紀錄</h2>
             </div>
-            <div id="preview-container" class="ratio-4-3" onclick="triggerFile('input-cam')">
+            <div class="header-btn" onclick="openSettings()" title="Settings (設定)">⚙️</div>
+        </div>
+
+        <div class="card">
+            <span class="section-title">1. Photo (圖片紀錄)</span>
+            <div class="photo-controls">
+                <button class="btn-half btn-cam" onclick="triggerCam()">📷 Camera (拍照)</button>
+                <button class="btn-half btn-gallery" onclick="triggerGallery()">🖼️ Gallery (相簿)</button>
+            </div>
+            
+            <div id="preview-container" class="ratio-4-3" onclick="triggerCam()" title="Click to take photo">
                 <div class="ratio-tag" id="ratio-display-tag">Ratio: 4:3</div>
-                <span class="placeholder">Tap here to Take Photo</span>
+                <span class="placeholder">Tap here to Take Photo<br>(點擊此處拍照)</span>
                 <img id="preview-img">
             </div>
+            
             <input type="file" id="input-cam" accept="image/*" capture="environment" class="hidden" onchange="handleFile(this)">
             <input type="file" id="input-gallery" accept="image/*" class="hidden" onchange="handleFile(this)">
         </div>
-        <div class="card" id="info-card">
-            <span class="section-title">2. Machine NG Information</span>
+
+        <div class="card" id="note-card">
+            <span class="section-title">2. Note (文字/語音)</span>
+            <textarea id="noteInput" placeholder="After taking a photo, type here or use voice... (拍照後，在此輸入或使用語音)"></textarea>
             
-            <div class="input-group">
-                <label class="input-label" style="color: #FF5722;">🗣️ Voice Language (語音語言):</label>
-                <select id="voice-lang-select" class="text-input" onchange="syncLanguageToSettings(this)">
-                    <option value="cmn-Hant-TW">Chinese (TW) - 繁體中文</option>
-                    <option value="en-US">English - 英文</option>
-                    <option value="ja-JP">Japanese - 日文</option>
-                    <option value="hi-IN">Hindi - 印地語</option>
+            <div class="voice-controls">
+                
+                <div class="quick-lang-container">
+                    <span class="lang-icon">🌐</span>
+                    <select id="main-lang" class="small-select" onchange="syncLanguage('main')">
+                        <option value="cmn-Hant-TW">中文 (繁體)</option>
+                        <option value="en-US">English</option>
+                        <option value="ja-JP">日本語</option>
+                        <option value="hi-IN">हिन्दी (Hindi)</option>
+                    </select>
+                </div>
+
+                <button type="button" class="btn-voice" id="voiceBtn" onclick="toggleVoice()">
+                    🎤 Start Voice (開始錄音)
+                </button>
+                <div style="text-align: right; font-size: 0.9em; color: #555; margin-top: 8px; font-weight: bold;">
+                    Time left: <span id="display-timeout" style="color:#d63384; font-size:1.1em;">10</span> s
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-btns">
+            <button class="btn-main btn-save" id="saveBtn" onclick="saveToCloud()">💾 Save to Cloud (存檔至雲端)</button>
+            <button class="btn-main btn-view" onclick="viewExcel()">📊 View Excel (檢視 Excel)</button>
+            <button class="btn-main btn-drive" onclick="viewDriveFolder()">📂 View Photos (檢視雲端照片)</button>
+        </div>
+    </div>
+
+    <div id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Settings (設定)</h3>
+                <button onclick="closeSettings()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            
+            <div class="modal-group" style="background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ccc;">
+                <label style="color:#d63384;">🔑 Login Password (修改登入密碼)</label>
+                <input type="text" id="set-password" class="modal-input" placeholder="Current: 1234">
+            </div>
+
+            <div class="modal-group">
+                <label>1. Voice Timeout (錄音總秒數)</label>
+                <input type="number" id="set-timeout" class="modal-input" value="10">
+            </div>
+
+            <div class="modal-group">
+                <label style="color:red;">2. Red Frame Warning (紅框閃爍警示秒數)</label>
+                <input type="number" id="set-warning" class="modal-input" value="3" placeholder="e.g. 3">
+            </div>
+
+            <div class="modal-group">
+                <label>3. Language (語音辨識語言)</label>
+                <select id="set-lang" class="modal-input" onchange="syncLanguage('settings')">
+                    <option value="cmn-Hant-TW">Traditional Chinese (繁體中文)</option>
+                    <option value="en-US">English (英文)</option>
+                    <option value="ja-JP">Japanese (日文)</option>
+                    <option value="hi-IN">Hindi (印地語)</option>
                 </select>
             </div>
 
-            <div class="input-group"><label class="input-label">Machine :</label><select id="input-machine" class="text-input"></select></div>
-            <div class="input-group"><label class="input-label">Repair Form No:</label><input type="text" id="input-form-no" class="text-input" placeholder="e.g. A69304"></div>
-            <div class="time-component">
-                <label class="input-label">Stop time : (DD/MM/YYYY hh:mm) (IST)</label>
-                <div class="time-input-row">
-                    <input type="text" id="input-stop-time-full" class="text-input" placeholder="請點右側按鈕或手動輸入" oninput="calculateTotalStopTime()">
-                    <button type="button" class="btn-update-time" onclick="updateSingleTime('input-stop-time-full')"><span style="font-size: 1.1em;">⏱️</span></button>
-                </div>
+            <div class="modal-group">
+                <label>4. Photo Aspect Ratio (照片比例)</label>
+                <select id="set-ratio" class="modal-input">
+                    <option value="4/3">4:3 (Standard)</option>
+                    <option value="16/9">16:9 (Wide)</option>
+                    <option value="9/16">9:16 (Vertical / 直式)</option>
+                    <option value="1/1">1:1 (Square)</option>
+                    <option value="FULL">FULL (Original / 全畫面)</option>
+                </select>
+                <div class="hint-text">* Applies auto-crop unless set to FULL.</div>
             </div>
-            <div class="time-component">
-                <label class="input-label">Start time : (DD/MM/YYYY hh:mm) (IST)</label>
-                <div class="time-input-row">
-                    <input type="text" id="input-start-time-full" class="text-input" placeholder="請點右側按鈕或手動輸入" oninput="calculateTotalStopTime()">
-                    <button type="button" class="btn-update-time" onclick="updateSingleTime('input-start-time-full')"><span style="font-size: 1.1em;">⏱️</span></button>
-                </div>
-            </div>
-            <div class="input-group">
-                <label class="input-label">Total stop time :</label>
-                <div class="total-time-input-group">
-                    <input type="text" id="input-total-time" class="text-input" readonly style="background-color: #eee; font-weight: bold;">
-                    <button type="button" class="btn-calc" onclick="calculateTotalStopTime()" title="Recalculate">🔄</button>
-                    <select id="total-time-unit" onchange="calculateTotalStopTime()" class="text-input"><option value="min" selected>min</option><option value="h">hr</option></select>
-                </div>
-            </div>
-            <div class="input-group"><label class="input-label">Concern Section :</label><select id="input-concern-section" class="text-input"></select></div>
-            <div class="input-group">
-                <label class="input-label">Reason :</label><textarea id="input-reason"></textarea>
-                <div class="voice-control-group"><button type="button" class="btn-voice" data-target="input-reason" onclick="toggleVoice(this)">🎤 語音輸入</button></div>
-            </div>
-            <div class="input-group">
-                <label class="input-label">How to Solve Problem:</label><textarea id="input-solution"></textarea>
-                <div class="voice-control-group"><button type="button" class="btn-voice" data-target="input-solution" onclick="toggleVoice(this)">🎤 語音輸入</button></div>
-            </div>
-            <div class="input-group">
-                <label class="input-label">Self Actions:</label><textarea id="input-self-actions"></textarea>
-                <div class="voice-control-group"><button type="button" class="btn-voice" data-target="input-self-actions" onclick="toggleVoice(this)">🎤 語音輸入</button></div>
-            </div>
-        </div>
 
-        <div id="recent-records-container" class="card">
-            <h4>最近紀錄 (Recent Records)</h4>
-            <div id="recent-records-list"><p style="text-align: center; color: #999;">Loading recent records...</p></div>
-        </div>
-        
-        <div class="footer-btns">
-            <button class="btn-main btn-copy" onclick="copyFormattedInfo()">📋<br>Copy</button>
-            <button class="btn-main btn-save" id="saveBtn" onclick="saveToCloud()">💾<br>Save</button>
-            <button class="btn-main btn-view" onclick="viewExcel()">📊<br>Excel</button>
-            <button class="btn-main btn-drive" onclick="viewDriveFolder()">📂<br>Photos</button>
-            <button class="btn-main btn-settings" onclick="openSettings()">⚙️<br>Setup</button>
+            <div style="text-align: center; color: var(--primary-color); font-size: 0.9em; margin-top: 15px;">
+                <p>✅ Cloud Paths are Locked (System Mode)</p>
+            </div>
+
+            <button class="btn-main btn-save" onclick="saveSettings()">Save Settings (儲存設定)</button>
         </div>
     </div>
 
 <script>
-    const DEFAULT_PASS = "12345"; const MAX_IMAGE_WIDTH = 1000;
-    const MACHINE_LIST_KEY = "cfg_machine_list"; const CONCERN_LIST_KEY = "cfg_concern_list"; const EMPLOYEE_ID_KEY = "cfg_employee_id";
-    const DEFAULT_MACHINE_LIST = ["BM5", "BM6", "BM7", "BM21", "BM22", "BM23", "CA3", "CA4", "CM1", "CM2", "CM3"];
-    const DEFAULT_CONCERN_LIST = ["Mixing", "Extrusion", "Cutting", "Calendering"];
-    const DEFAULT_VOICE_TIMEOUT = 1.5;
-    const DEFAULT_RECENT_LIMIT = 5; 
+    // ================= 初始化 =================
+    const DEFAULT_PASS = "1234"; 
+    
+    // --- 這裡是你要求的寫死路徑 (FIXED PATHS) ---
+    // 我已經將你提供的連結轉換成對應的 ID 並固定於此。
+    const FIXED_SCRIPT_ID = "AKfycbzTDioUw8L5vZ9H3rUEB-df_sSmJ4kg86NFraktwmU4-qtiESh_u_tZPnyIsUOW9LaK/exec";
+    const FIXED_SHEET_ID = "1GcnAkIHAhnVjrH9bO9TQbdTUwQT17XtyQWUPh7WSTLA/edit?gid=0#gid=0";
+    const FIXED_FOLDER_ID = "1MCaCvWS73lyPd90yMXnDrD5BqiEw7O08";
 
-    // TODO: 請務必修改以下三個路徑
-    const FIXED_SCRIPT_ID = "AKfycbzfPzPODQjp_phrHPwjsoBYeA8-VgeaoYly6hr3Mx09Wj-o5tWHMPa-nTHfaHyloiH8zg/exec"; 
-    const FIXED_SHEET_ID = "1sDKZBJfasUbZSGNAfz9GIWfRdrdXxQMrXrxM3x9RlCY"; 
-    const FIXED_FOLDER_ID = "1VPfLCMIuJPA66RjN8isrC4xq3luPMJe4"; 
-    const GAS_URL = `https://script.google.com/macros/s/${FIXED_SCRIPT_ID}/exec`;
+    let processedImageBase64 = ""; 
+    let recognition;
+    
+    // 錄音狀態
+    let isRecording = false; 
+    let isManualStop = false; 
+    let voiceTimer = null;          
+    let countdownInterval = null;   
+    let punctuationTimer = null; 
+    let timeLeft = 0; 
+    let snapshotText = ""; 
 
-    let processedImageBase64 = "", recognition = null, isRecording = false, activeTextAreaId = null, snapshotText = "", punctuationTimer = null;
-
-    document.addEventListener('DOMContentLoaded', () => { initApp(); });
-
-    function initApp() {
-        if(!localStorage.getItem("app_password")) localStorage.setItem("app_password", DEFAULT_PASS);
-        if(!localStorage.getItem(MACHINE_LIST_KEY)) localStorage.setItem(MACHINE_LIST_KEY, JSON.stringify(DEFAULT_MACHINE_LIST));
-        if(!localStorage.getItem(CONCERN_LIST_KEY)) localStorage.setItem(CONCERN_LIST_KEY, JSON.stringify(DEFAULT_CONCERN_LIST));
-        if(!localStorage.getItem("cfg_timeout")) localStorage.setItem("cfg_timeout", DEFAULT_VOICE_TIMEOUT);
-        if(!localStorage.getItem("cfg_recent_limit")) localStorage.setItem("cfg_recent_limit", DEFAULT_RECENT_LIMIT);
-        
-        loadSettingsToUI(); loadMachineListToUI(); loadConcernSectionToUI(); loadEmployeeID(); 
-        
-        document.getElementById('input-stop-time-full').value = ""; document.getElementById('input-start-time-full').value = "";
-        document.getElementById('input-total-time').value = ""; document.getElementById('input-total-time').style.backgroundColor = '#eee';
-        document.getElementById('total-time-unit').value = "min"; 
-        
+    window.onload = function() {
+        if(!localStorage.getItem("app_password")) {
+            localStorage.setItem("app_password", DEFAULT_PASS);
+        }
         const isLoggedIn = localStorage.getItem("isLoggedIn");
         if(isLoggedIn === "true") {
-            document.getElementById('app-screen').style.display = 'block'; document.getElementById('login-screen').style.display = 'none';
-            applySettings(); loadRecentRecords();
+            showApp();
         } else {
-            document.getElementById('app-screen').style.display = 'none'; document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('login-screen').style.display = 'flex';
+        }
+        loadSettingsToUI();
+    };
+
+    function checkLogin() {
+        const input = document.getElementById('loginPass').value;
+        const storedPass = localStorage.getItem("app_password");
+        if(input === storedPass) {
+            localStorage.setItem("isLoggedIn", "true");
+            showApp();
+        } else {
+            alert("Wrong Password! (密碼錯誤)");
         }
     }
 
-    function checkLogin(){const i=document.getElementById('loginPass').value;if(i===localStorage.getItem("app_password")){localStorage.setItem("isLoggedIn","true");document.getElementById('login-screen').style.display='none';document.getElementById('app-screen').style.display='block';applySettings();loadRecentRecords()}else{alert("Password incorrect.")}}
-    function logout(){if(confirm("Logout?")){localStorage.removeItem("isLoggedIn");document.getElementById('app-screen').style.display='none';document.getElementById('login-screen').style.display='flex';document.getElementById('loginPass').value=''}}
-    function openSettings(){document.getElementById('settings-modal').style.display='flex';renderConcernListSettings();renderMachineListSettings();document.getElementById('set-password').value=''}
-    function closeSettings(){document.getElementById('settings-modal').style.display='none'}
-    function saveSettings(){
-        const p=document.getElementById('set-password').value.trim();if(p)localStorage.setItem("app_password",p);
-        const t=parseFloat(document.getElementById('set-timeout').value);if(!isNaN(t))localStorage.setItem("cfg_timeout",t);
-        const limit = parseInt(document.getElementById('set-recent-limit').value);
-        if(!isNaN(limit) && limit > 0) localStorage.setItem("cfg_recent_limit", limit);
-        localStorage.setItem("cfg_ratio",document.getElementById('set-ratio').value);
-        localStorage.setItem("cfg_lang",document.getElementById('set-lang').value);
-        alert("Saved!");closeSettings();applySettings();
-        loadRecentRecords(); 
-    }
-    function loadSettingsToUI(){
-        document.getElementById('set-timeout').value=localStorage.getItem("cfg_timeout")||DEFAULT_VOICE_TIMEOUT;
-        document.getElementById('set-ratio').value=localStorage.getItem("cfg_ratio")||'4/3';
-        document.getElementById('set-lang').value=localStorage.getItem("cfg_lang")||'cmn-Hant-TW';
-        document.getElementById('set-recent-limit').value = localStorage.getItem("cfg_recent_limit") || DEFAULT_RECENT_LIMIT;
-    }
-    
-    function applySettings(){
-        const r=localStorage.getItem("cfg_ratio")||'4/3';const c=document.getElementById('preview-container');c.className='';c.classList.add(r==='4/3'?'ratio-4-3':r==='16/9'?'ratio-16-9':r==='9/16'?'ratio-9-16':'ratio-1-1');document.getElementById('ratio-display-tag').innerText=`Ratio: ${r.replace('/',':')}`;
-        const l = localStorage.getItem("cfg_lang")||'cmn-Hant-TW';
-        document.getElementById('voice-lang-select').value = l;
-        document.getElementById('set-lang').value = l;
-    }
-    function syncLanguage(){localStorage.setItem("cfg_lang",document.getElementById('set-lang').value);document.getElementById('voice-lang-select').value=document.getElementById('set-lang').value}
-    function syncLanguageToSettings(el){localStorage.setItem("cfg_lang",el.value);document.getElementById('set-lang').value=el.value}
-
-    function getMachineList(){try{return JSON.parse(localStorage.getItem(MACHINE_LIST_KEY))||DEFAULT_MACHINE_LIST}catch(e){return DEFAULT_MACHINE_LIST}}
-    function saveMachineList(l){localStorage.setItem(MACHINE_LIST_KEY,JSON.stringify(l));loadMachineListToUI();renderMachineListSettings()}
-    function loadMachineListToUI(){const s=document.getElementById('input-machine');s.innerHTML='<option value="">-- Select --</option>';getMachineList().forEach(i=>{const o=document.createElement('option');o.value=i;o.innerText=i;s.appendChild(o)})}
-    function renderMachineListSettings(){const c=document.getElementById('machine-list-container');c.innerHTML='';getMachineList().forEach(i=>{const d=document.createElement('div');d.innerHTML=`<span>${i}</span><button onclick="removeMachine('${i}')" style="background:var(--danger-color);color:white;border:none;padding:2px 5px;">X</button>`;d.style.cssText="display:flex;justify-content:space-between;margin:5px 0;";c.appendChild(d)})}
-    function addMachine(){const v=document.getElementById('new-machine-name').value.trim().toUpperCase();if(v){let l=getMachineList();if(!l.includes(v)){l.push(v);saveMachineList(l.sort())}document.getElementById('new-machine-name').value=''}}
-    function removeMachine(v){if(confirm(`Remove ${v}?`)){let l=getMachineList().filter(i=>i!==v);saveMachineList(l)}}
-    function getConcernList(){try{return JSON.parse(localStorage.getItem(CONCERN_LIST_KEY))||DEFAULT_CONCERN_LIST}catch(e){return DEFAULT_CONCERN_LIST}}
-    function saveConcernList(l){localStorage.setItem(CONCERN_LIST_KEY,JSON.stringify(l));loadConcernSectionToUI();renderConcernListSettings()}
-    function loadConcernSectionToUI(){const s=document.getElementById('input-concern-section');s.innerHTML='<option value="">-- Select --</option>';getConcernList().forEach(i=>{const o=document.createElement('option');o.value=i;o.innerText=i;s.appendChild(o)})}
-    function renderConcernListSettings(){const c=document.getElementById('concern-section-list-container');c.innerHTML='';getConcernList().forEach(i=>{const d=document.createElement('div');d.innerHTML=`<span>${i}</span><button onclick="removeConcernSection('${i}')" style="background:var(--danger-color);color:white;border:none;padding:2px 5px;">X</button>`;d.style.cssText="display:flex;justify-content:space-between;margin:5px 0;";c.appendChild(d)})}
-    function addConcernSection(){const v=document.getElementById('new-concern-section').value.trim();if(v){let l=getConcernList();if(!l.includes(v)){l.push(v);saveConcernList(l.sort())}document.getElementById('new-concern-section').value=''}}
-    function removeConcernSection(v){if(confirm(`Remove ${v}?`)){let l=getConcernList().filter(i=>i!==v);saveConcernList(l)}}
-    function loadEmployeeID(){const v=localStorage.getItem(EMPLOYEE_ID_KEY);if(v)document.getElementById('input-employee-id').value=v}
-    function saveEmployeeID(){const v=document.getElementById('input-employee-id').value.trim();if(v)localStorage.setItem(EMPLOYEE_ID_KEY,v)}
-    
-    const DATETIME_REGEX = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/;
-    function parseCustomDateTime(dtStr) {
-        if(!dtStr) return null;
-        const s = dtStr.trim(); 
-        const match = s.match(DATETIME_REGEX);
-        if (!match) return null;
-        const day = parseInt(match[1], 10);
-        const month = parseInt(match[2], 10) - 1; 
-        const year = parseInt(match[3], 10);
-        const hour = parseInt(match[4], 10);
-        const minute = parseInt(match[5], 10);
-        const date = new Date(year, month, day, hour, minute);
-        if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) return null;
-        return date;
-    }
-    
-    function calculateTotalStopTime() {
-        const s1 = document.getElementById('input-stop-time-full').value;
-        const s2 = document.getElementById('input-start-time-full').value;
-        const t = document.getElementById('input-total-time');
-        const u = document.getElementById('total-time-unit').value;
-        if(!s1||!s2){ t.value=""; t.style.background='#eee'; return; }
-        const d1 = parseCustomDateTime(s1);
-        const d2 = parseCustomDateTime(s2);
-        if(!d1||!d2){ t.value="Invalid Format"; t.style.background='#fdd'; return; }
-        const diff = Math.round((d2 - d1) / 60000);
-        if(diff <= 0){ t.value="0 (Check Time)"; t.style.background='#fdd'; return; }
-        t.value = u === 'h' ? (diff/60).toFixed(2) + " hr" : diff + " min";
-        t.style.background='#e6ffed';
-    }
-    
-    function getFullDateTimeString(dateObj) {
-        const utc = dateObj.getTime() + (dateObj.getTimezoneOffset() * 60000);
-        const istDate = new Date(utc + (3600000 * 5.5));
-        const day = String(istDate.getDate()).padStart(2, '0');
-        const month = String(istDate.getMonth() + 1).padStart(2, '0');
-        const year = istDate.getFullYear();
-        const hour = String(istDate.getHours()).padStart(2, '0');
-        const minute = String(istDate.getMinutes()).padStart(2, '0');
-        return `${day}/${month}/${year} ${hour}:${minute}`;
-    }
-    function updateSingleTime(id){const n=new Date();document.getElementById(id).value=getFullDateTimeString(n);calculateTotalStopTime()}
-    
-    function loadRecentRecords(){
-        const listContainer=document.getElementById('recent-records-list');listContainer.innerHTML='<p style="text-align: center; color: #999;">Loading...</p>';
-        const limit = parseInt(localStorage.getItem("cfg_recent_limit")) || DEFAULT_RECENT_LIMIT;
-
-        fetch(`${GAS_URL}?action=loadRecords`).then(r=>r.json()).then(res=>{
-            listContainer.innerHTML='';
-            if(res.result==='success'&&res.data.length>0){
-                const recordsToShow = res.data.slice(0, limit);
-                recordsToShow.forEach(r=>{
-                    const i=document.createElement('div');i.className='record-item';i.setAttribute('onclick',`populateForm('${r.formNo}')`);
-                    i.innerHTML=`<div class="main-info-group"><span class="form-no-display">#${r.formNo||'N/A'}</span><span class="stop-time-display">🛑 ${r.stopTime||"No Stop Time"}</span></div><div class="details"><div>${r.machine||'N/A'} (${r.concernSection||'N/A'})</div><div>${r.startTime?'Start: '+r.startTime:''}</div></div>`;
-                    listContainer.appendChild(i)
-                })
-            }else{listContainer.innerHTML='<p style="text-align: center; color: #999;">無最近紀錄。</p>'}
-        }).catch(e=>{listContainer.innerHTML='<p style="text-align: center; color: red;">❌ 載入失敗。</p>'})
+    function logout() {
+        if(confirm("Lock and logout?\n(確定要鎖定並登出嗎？)")) {
+            localStorage.removeItem("isLoggedIn"); 
+            document.getElementById('app-screen').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex'; 
+            document.getElementById('loginPass').value = ""; 
+            closeSettings();
+        }
     }
 
-    function populateForm(f){
-        if(!confirm(`回填單號 [${f}]?`))return;showStatus('loading','Loading...',f);
-        fetch(`${GAS_URL}?action=getRow&formNo=${encodeURIComponent(f)}`).then(r=>r.json()).then(res=>{
-            if(res.result==='success'){
-                const d=res.data;processedImageBase64="";document.getElementById('preview-img').style.display='none';document.querySelector('.placeholder').style.display='block';
-                document.getElementById('input-employee-id').value=d.employeeId;document.getElementById('input-machine').value=d.machine;
-                document.getElementById('input-form-no').value=d.formNo;document.getElementById('input-stop-time-full').value=d.stopTimeFull?d.stopTimeFull.trim():"";
-                document.getElementById('input-start-time-full').value=d.startTimeFull?d.startTimeFull.trim():"";document.getElementById('input-concern-section').value=d.concernSection;
-                document.getElementById('input-reason').value=d.reason;document.getElementById('input-solution').value=d.solution;document.getElementById('input-self-actions').value=d.selfActions;
-                calculateTotalStopTime();showStatus('success','Loaded','');setTimeout(closeStatusModal,1000)
-            }else{showStatus('error','Failed',res.error)}
-        }).catch(e=>showStatus('error','Error','Network'))
-    }
-    function triggerFile(id){document.getElementById(id).click()}
-    function handleFile(i){if(i.files[0]){showStatus('loading','Processing...','');const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>processImageWithCanvas(img);img.src=e.target.result};r.readAsDataURL(i.files[0])}}
-    function processImageWithCanvas(img){const c=document.createElement('canvas');let w=img.width;let h=img.height;if(w>MAX_IMAGE_WIDTH){h=Math.round(h*(MAX_IMAGE_WIDTH/w));w=MAX_IMAGE_WIDTH}c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);processedImageBase64=c.toDataURL('image/jpeg',0.8);document.getElementById('preview-img').src=processedImageBase64;document.getElementById('preview-img').style.display='block';document.querySelector('.placeholder').style.display='none';closeStatusModal()}
-    
-    function toggleVoice(button) {
-        if (!('webkitSpeechRecognition' in window)) { alert("請使用 Chrome 瀏覽器"); return; }
-        if (isRecording) { manualStopVoice(); } else { activeTextAreaId = button.dataset.target; startVoice(button); }
+    function showApp() {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'block';
+        applySettings(); 
     }
 
-    function startVoice(button) {
-        isRecording = true; button.classList.add('recording'); button.innerHTML = '🔴 錄音中...';
-        recognition = new webkitSpeechRecognition(); recognition.continuous = true; recognition.interimResults = true;
-        recognition.lang = document.getElementById('voice-lang-select').value; 
+    // ================= 設定功能 & 語言同步 =================
+    function openSettings() {
+        loadSettingsToUI();
+        document.getElementById('settings-modal').style.display = 'flex';
+    }
+    function closeSettings() {
+        document.getElementById('settings-modal').style.display = 'none';
+    }
+    
+    function syncLanguage(source) {
+        let val;
+        if (source === 'main') {
+            val = document.getElementById('main-lang').value;
+            document.getElementById('set-lang').value = val;
+        } else {
+            val = document.getElementById('set-lang').value;
+            document.getElementById('main-lang').value = val;
+        }
+        localStorage.setItem("cfg_lang", val);
+    }
+
+    // 雖然現在寫死了，但保留此函數以防未來需要
+    function extractId(input) {
+        if (!input) return "";
+        input = input.trim();
+        if (input.includes("script.google.com")) {
+            const match = input.match(/\/s\/([a-zA-Z0-9-_]+)\/exec/);
+            return match ? match[1] : input;
+        }
+        if (input.includes("docs.google.com")) {
+            const match = input.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            return match ? match[1] : input;
+        }
+        if (input.includes("drive.google.com")) {
+            const match = input.match(/\/folders\/([a-zA-Z0-9-_]+)/);
+            return match ? match[1] : input;
+        }
+        return input;
+    }
+
+    function saveSettings() {
+        const newPass = document.getElementById('set-password').value;
+        const timeout = document.getElementById('set-timeout').value;
+        const warning = document.getElementById('set-warning').value;
+        const lang = document.getElementById('set-lang').value; 
+        const ratio = document.getElementById('set-ratio').value;
+
+        if(newPass.trim() === "") { alert("Password cannot be empty!"); return; }
+
+        localStorage.setItem("app_password", newPass); 
+        localStorage.setItem("cfg_timeout", timeout);
+        localStorage.setItem("cfg_warning", warning);
+        localStorage.setItem("cfg_lang", lang);
+        localStorage.setItem("cfg_ratio", ratio);
         
-        const targetElement = document.getElementById(activeTextAreaId);
-        snapshotText = targetElement.value; 
-        if (snapshotText.length > 0 && !snapshotText.endsWith(' ') && !snapshotText.endsWith('\n')) {
-            snapshotText += ' ';
+        document.getElementById('main-lang').value = lang;
+
+        alert("Settings Saved!");
+        closeSettings();
+        applySettings();
+    }
+
+    function loadSettingsToUI() {
+        document.getElementById('set-password').value = localStorage.getItem("app_password");
+        document.getElementById('set-timeout').value = localStorage.getItem("cfg_timeout") || "10";
+        document.getElementById('set-warning').value = localStorage.getItem("cfg_warning") || "3";
+        const savedLang = localStorage.getItem("cfg_lang") || "cmn-Hant-TW";
+        document.getElementById('set-lang').value = savedLang;
+        document.getElementById('main-lang').value = savedLang;
+        document.getElementById('set-ratio').value = localStorage.getItem("cfg_ratio") || "4/3";
+    }
+
+    function applySettings() {
+        const timeout = localStorage.getItem("cfg_timeout") || "10";
+        document.getElementById('display-timeout').innerText = timeout;
+        const ratio = localStorage.getItem("cfg_ratio") || "4/3";
+        const container = document.getElementById('preview-container');
+        const tag = document.getElementById('ratio-display-tag');
+        
+        container.className = ""; 
+        container.style.aspectRatio = "";
+
+        if(ratio === "4/3") container.classList.add("ratio-4-3");
+        else if(ratio === "16/9") container.classList.add("ratio-16-9");
+        else if(ratio === "9/16") container.classList.add("ratio-9-16");
+        else if(ratio === "1/1") container.classList.add("ratio-1-1");
+        else if(ratio === "FULL") container.classList.add("ratio-full");
+        
+        if(ratio === "FULL") tag.innerText = "Ratio: Full (Original)";
+        else tag.innerText = "Ratio: " + ratio.replace("/", ":");
+    }
+
+    // ================= 圖片處理 =================
+    function triggerCam() { document.getElementById('input-cam').click(); }
+    function triggerGallery() { document.getElementById('input-gallery').click(); }
+    function handleFile(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() { processImageWithCanvas(img); };
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+    function processImageWithCanvas(img) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const ratioStr = localStorage.getItem("cfg_ratio") || "4/3";
+        
+        let targetRatio = 4/3;
+        let isFull = false;
+
+        if(ratioStr === "FULL") isFull = true;
+        else if(ratioStr === "16/9") targetRatio = 16/9;
+        else if(ratioStr === "9/16") targetRatio = 9/16;
+        else if(ratioStr === "1/1") targetRatio = 1;
+
+        let srcW = img.width; let srcH = img.height;
+        let drawW, drawH, startX, startY;
+
+        if (isFull) {
+            drawW = srcW; drawH = srcH; startX = 0; startY = 0;
+        } else {
+            let srcRatio = srcW / srcH;
+            if (srcRatio > targetRatio) {
+                drawH = srcH; drawW = srcH * targetRatio;
+                startX = (srcW - drawW) / 2; startY = 0;
+            } else {
+                drawW = srcW; drawH = srcW / targetRatio;
+                startX = 0; startY = (srcH - drawH) / 2;
+            }
         }
 
-        recognition.onstart = function() { clearTimeout(punctuationTimer); };
+        const MAX_WIDTH = 1000; 
+        const scale = MAX_WIDTH / drawW;
+        canvas.width = MAX_WIDTH; canvas.height = drawH * scale;
+
+        ctx.drawImage(img, startX, startY, drawW, drawH, 0, 0, canvas.width, canvas.height);
+        processedImageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+        
+        const preview = document.getElementById('preview-img');
+        preview.src = processedImageBase64;
+        preview.style.display = 'block';
+        document.querySelector('.placeholder').style.display = 'none';
+
+        if(isFull) {
+             const container = document.getElementById('preview-container');
+             container.className = ""; 
+             container.style.aspectRatio = `${canvas.width} / ${canvas.height}`;
+        }
+    }
+
+    // ================= 語音功能 (修正：標點遺失問題) =================
+    function toggleVoice() {
+        if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+            alert("Browser not supported"); return;
+        }
+        if (isRecording) {
+            manualStopVoice(); 
+        } else {
+            startVoice();
+        }
+    }
+    
+    function startVoice() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        
+        recognition.lang = document.getElementById('main-lang').value || 'cmn-Hant-TW';
+        recognition.continuous = true; 
+        recognition.interimResults = true; 
+
+        isRecording = true;
+        isManualStop = false; 
+        document.getElementById('voiceBtn').classList.add('recording');
+        document.getElementById('voiceBtn').innerText = "🛑 Stop";
+        
+        // 建立快照
+        snapshotText = document.getElementById('noteInput').value;
+        if(snapshotText.length > 0 && !snapshotText.endsWith(" ")) {
+            snapshotText += " ";
+        }
+
+        const timeoutSec = parseInt(localStorage.getItem("cfg_timeout") || "10");
+        const warningSec = parseInt(localStorage.getItem("cfg_warning") || "3");
+        const purpleSec = warningSec + 5; 
+        
+        timeLeft = timeoutSec;
+        document.getElementById('display-timeout').innerText = timeLeft;
+        
+        const noteInput = document.getElementById('noteInput');
+        noteInput.classList.remove('anim-red', 'anim-purple', 'anim-green');
+        noteInput.classList.add('anim-green'); 
+
+        if(countdownInterval) clearInterval(countdownInterval);
+
+        countdownInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('display-timeout').innerText = timeLeft;
+
+            noteInput.classList.remove('anim-red', 'anim-purple', 'anim-green');
+
+            if(timeLeft <= warningSec) {
+                noteInput.classList.add('anim-red');
+            } else if (timeLeft <= purpleSec) {
+                noteInput.classList.add('anim-purple');
+            } else {
+                noteInput.classList.add('anim-green');
+            }
+
+            if(timeLeft <= 0) {
+                manualStopVoice(); 
+            }
+        }, 1000);
 
         recognition.onresult = function(event) {
-            clearTimeout(punctuationTimer); 
-            let sessionFinal = '';
-            let sessionInterim = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) { sessionFinal += event.results[i][0].transcript; } 
-                else { sessionInterim += event.results[i][0].transcript; }
-            }
-            if (sessionFinal) { snapshotText += sessionFinal; }
-            targetElement.value = snapshotText + sessionInterim;
+            let currentSessionText = ''; 
             
-            const timeout = parseFloat(localStorage.getItem("cfg_timeout") || DEFAULT_VOICE_TIMEOUT) * 1000;
-            punctuationTimer = setTimeout(manualStopVoice, timeout);
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                currentSessionText += event.results[i][0].transcript;
+            }
+
+            const noteArea = document.getElementById('noteInput');
+            noteArea.value = snapshotText + currentSessionText;
+            noteArea.scrollTop = noteArea.scrollHeight;
+
+            if(punctuationTimer) clearTimeout(punctuationTimer);
+            
+            if(currentSessionText.trim().length > 0) {
+                punctuationTimer = setTimeout(() => {
+                    // 計時器觸發：停頓1秒後切斷
+                    recognition.stop(); 
+                }, 1000);
+            }
         };
 
-        recognition.onerror = function(event) {
-            console.error('Error:', event.error);
-            if(event.error === 'no-speech') { }
-            else { resetVoiceUI(); alert('語音錯誤: ' + event.error); }
-        };
-
+        // 5. 強制不中斷 & 自動重啟邏輯 (含補標點)
         recognition.onend = function() {
-            if (isRecording) {
-                try { 
-                    const el = document.getElementById(activeTextAreaId);
-                    if(el) snapshotText = el.value; 
-                    if (snapshotText.length > 0 && !snapshotText.endsWith(' ') && !snapshotText.endsWith('\n')) { snapshotText += ' '; }
-                    recognition.start(); 
-                } catch(e) { console.warn("Restart failed"); }
+            if(punctuationTimer) clearTimeout(punctuationTimer);
+
+            if (isRecording && !isManualStop && timeLeft > 0) {
+                // 檢查是否需要補標點
+                let currentVal = document.getElementById('noteInput').value.trim();
+                if(currentVal.length > 0) {
+                    const lastChar = currentVal.slice(-1);
+                    const marks = ["，", "。", ",", "."];
+                    if(!marks.includes(lastChar)) {
+                        const lang = document.getElementById('main-lang').value;
+                        const mark = lang.includes('en') ? ", " : "，";
+                        currentVal += mark;
+                        document.getElementById('noteInput').value = currentVal;
+                    }
+                }
+
+                // 更新快照
+                snapshotText = document.getElementById('noteInput').value;
+                if(snapshotText.length > 0 && !snapshotText.endsWith(" ")) {
+                    snapshotText += " "; 
+                }
+                recognition.start(); 
             } else {
                 resetVoiceUI();
             }
         };
-
-        try { recognition.start(); } catch(e) { console.warn("Start failed"); }
+        
+        try {
+            recognition.start();
+        } catch(e) {
+            console.error("Start error", e);
+        }
     }
 
     function manualStopVoice() {
         isRecording = false; 
-        if (recognition) { clearTimeout(punctuationTimer); recognition.stop(); const targetElement = document.getElementById(activeTextAreaId); if(targetElement) snapshotText = targetElement.value; }
+        isManualStop = true; 
+        if(recognition) recognition.stop();
         resetVoiceUI();
     }
 
     function resetVoiceUI() {
-        isRecording = false; document.querySelectorAll('.btn-voice').forEach(b=>{b.classList.remove('recording');b.innerText='🎤 語音輸入'}); activeTextAreaId = null;
+        if(countdownInterval) clearInterval(countdownInterval);
+        if(punctuationTimer) clearTimeout(punctuationTimer);
+        
+        document.getElementById('voiceBtn').classList.remove('recording');
+        document.getElementById('voiceBtn').innerText = "🎤 Start Voice (開始錄音)";
+        
+        const noteInput = document.getElementById('noteInput');
+        noteInput.classList.remove('anim-red', 'anim-purple', 'anim-green');
+        
+        const originalTime = localStorage.getItem("cfg_timeout") || "10";
+        document.getElementById('display-timeout').innerText = originalTime;
     }
 
-    function showStatus(t,h,s){const m=document.getElementById('status-modal');document.getElementById('status-text').innerText=h;document.getElementById('status-subtext').innerText=s;document.getElementById('status-spinner').style.display=t==='loading'?'block':'none';document.getElementById('status-icon').style.display=t!=='loading'?'block':'none';document.getElementById('status-close-btn').style.display=t!=='loading'?'block':'none';document.getElementById('status-icon').innerText=t==='success'?'✅':'❌';m.style.display='flex'}
-    function closeStatusModal(){document.getElementById('status-modal').style.display='none'}
-    function copyFormattedInfo(){
-        const m=document.getElementById('input-machine').value;const f=document.getElementById('input-form-no').value;const r=document.getElementById('input-reason').value;
-        if(!m||!f||!r){alert("Data incomplete");return}
-        navigator.clipboard.writeText(`Machine: ${m}\nForm: ${f}\nReason: ${r}`).then(()=>alert("Copied!"));
+    // ================= 上傳與檢視 =================
+    function showStatus(type, title, subtitle) {
+        const modal = document.getElementById('status-modal');
+        const spinner = document.getElementById('status-spinner');
+        const icon = document.getElementById('status-icon');
+        const text = document.getElementById('status-text');
+        const sub = document.getElementById('status-subtext');
+        const closeBtn = document.getElementById('status-close-btn');
+
+        modal.style.display = 'flex';
+        text.innerText = title; sub.innerText = subtitle;
+
+        if(type === 'loading') {
+            spinner.style.display = 'block'; icon.style.display = 'none'; closeBtn.style.display = 'none';
+        } else if(type === 'success') {
+            spinner.style.display = 'none'; icon.style.display = 'block'; icon.innerText = '✅'; closeBtn.style.display = 'none';
+        } else if(type === 'error') {
+            spinner.style.display = 'none'; icon.style.display = 'block'; icon.innerText = '❌'; closeBtn.style.display = 'block';
+        }
     }
-    function viewExcel(){window.open(`https://docs.google.com/spreadsheets/d/${FIXED_SHEET_ID}/edit`,'_blank')}
-    function viewDriveFolder(){window.open(`https://drive.google.com/drive/folders/${FIXED_FOLDER_ID}`,'_blank')}
-    function clearInputs(){
-        document.getElementById('input-machine').value="";document.getElementById('input-form-no').value="";document.getElementById('input-stop-time-full').value="";document.getElementById('input-start-time-full').value="";document.getElementById('input-total-time').value="";document.getElementById('input-reason').value="";document.getElementById('input-solution').value="";document.getElementById('input-self-actions').value="";processedImageBase64="";document.getElementById('preview-img').style.display='none';document.querySelector('.placeholder').style.display='block';calculateTotalStopTime();
+
+    function closeStatusModal() { document.getElementById('status-modal').style.display = 'none'; }
+
+    function saveToCloud() {
+        const note = document.getElementById('noteInput').value;
+        
+        // --- 使用寫死的 Folder ID ---
+        const folderId = FIXED_FOLDER_ID;
+        
+        // --- 使用寫死的 Script ID ---
+        const scriptUrl = `https://script.google.com/macros/s/${FIXED_SCRIPT_ID}/exec`;
+
+        if(!processedImageBase64 && !note) {
+            alert("Empty! Please take a photo or write a note."); return;
+        }
+
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true;
+        showStatus('loading', 'Uploading...', '資料上傳中...');
+
+        const data = { note: note, image: processedImageBase64, folderId: folderId };
+
+        fetch(scriptUrl, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        })
+        .then(r => r.json())
+        .then(res => {
+            showStatus('success', 'Upload Success!', '上傳成功！');
+            document.getElementById('noteInput').value = "";
+            processedImageBase64 = "";
+            document.getElementById('preview-img').style.display = 'none';
+            document.querySelector('.placeholder').style.display = 'block';
+            applySettings();
+            setTimeout(() => { closeStatusModal(); }, 2000);
+        })
+        .catch(e => {
+            console.error(e);
+            showStatus('error', 'Upload Failed', '上傳失敗，請檢查網路。');
+        })
+        .finally(() => {
+            btn.disabled = false;
+        });
     }
-    function saveToCloud(){
-        if(isRecording)manualStopVoice();
-        const d={image:processedImageBase64,employeeId:document.getElementById('input-employee-id').value,machine:document.getElementById('input-machine').value,stopTimeFull:document.getElementById('input-stop-time-full').value,startTimeFull:document.getElementById('input-start-time-full').value,formNo:document.getElementById('input-form-no').value,reason:document.getElementById('input-reason').value,concernSection:document.getElementById('input-concern-section').value,solution:document.getElementById('input-solution').value,selfActions:document.getElementById('input-self-actions').value,folderId:FIXED_FOLDER_ID};
-        if(!d.formNo){alert("Form No required");return}
-        saveEmployeeID();showStatus('loading','Uploading...','');
-        fetch(GAS_URL,{method:'POST',body:JSON.stringify(d)}).then(r=>r.json()).then(res=>{if(res.result==='success'){showStatus('success','Saved!',res.action);clearInputs();loadRecentRecords();setTimeout(closeStatusModal,2000)}else{showStatus('error','Failed',res.error)}}).catch(e=>showStatus('error','Error',e.message)).finally(()=>document.getElementById('saveBtn').disabled=false);
+
+    function viewExcel() {
+        // --- 使用寫死的 Sheet ID ---
+        const url = `https://docs.google.com/spreadsheets/d/${FIXED_SHEET_ID}/edit`;
+        window.open(url, '_blank');
+    }
+
+    function viewDriveFolder() {
+        // --- 使用寫死的 Folder ID ---
+        const folderId = FIXED_FOLDER_ID;
+        if(folderId && folderId.trim() !== "") {
+            window.open("https://drive.google.com/drive/folders/" + folderId, '_blank');
+        } else {
+            // Fallback (理論上不會發生，因為已經寫死 ID 了)
+            if(confirm("Folder ID not set. Open Google Drive Root?\n(尚未設定資料夾 ID，要開啟雲端硬碟根目錄嗎？)")) {
+                window.open("https://drive.google.com/drive/my-drive", '_blank');
+            }
+        }
     }
 </script>
+
 </body>
 </html>
+
