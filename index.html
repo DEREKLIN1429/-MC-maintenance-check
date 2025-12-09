@@ -20,19 +20,7 @@
             display: flex; justify-content: center; height: 100vh;
         }
 
-        #login-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color); z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .login-box {
-            background: white; padding: 30px; border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; width: 80%; max-width: 300px;
-        }
-        .login-input {
-            width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #ddd;
-            border-radius: 8px; font-size: 18px; text-align: center;
-        }
+        /* 移除了登入相關的 CSS (login-screen, login-box 等) */
 
         #status-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -290,21 +278,30 @@
         .modal-input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem;}
         select.modal-input { background: white; }
         .hint-text { font-size: 0.8rem; color: #888; margin-top: 3px; }
+        
+        /* 連結按鈕樣式 */
+        .link-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            color: #333;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .link-btn:active { background-color: #e2e6ea; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
-
-    <div id="login-screen">
-        <div class="login-box">
-            <h3>🔒 Login (登入)</h3>
-            <p style="color:#666; font-size:0.9em;">Please enter password<br>(請輸入密碼)</p>
-            <input type="password" id="loginPass" class="login-input" placeholder="Password">
-            <button class="btn-main btn-save" style="aspect-ratio: auto; padding:15px; flex-direction:row;" onclick="checkLogin()">Login (進入)</button>
-        </div>
-    </div>
 
     <div id="status-modal">
         <div class="status-box">
@@ -320,7 +317,7 @@
         <div class="author-header">Author: DERER LIN</div>
 
         <div class="header">
-            <div class="header-btn" onclick="logout()" title="Lock / Logout (鎖定/登出)">🔒</div>
+            <div class="header-btn" style="visibility: hidden;"></div> 
             <div class="header-title">
                 <h2>MC-maintenance<br>機械查核保養</h2>
             </div>
@@ -403,11 +400,6 @@
                 <button onclick="closeSettings()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
             
-            <div class="modal-group" style="background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ccc;">
-                <label style="color:#d63384;">🔑 Login Password (修改登入密碼)</label>
-                <input type="text" id="set-password" class="modal-input" placeholder="Current: 1234">
-            </div>
-
             <div class="modal-group">
                 <label>1. Voice Timeout (錄音總秒數)</label>
                 <input type="number" id="set-timeout" class="modal-input" value="10">
@@ -440,6 +432,35 @@
                 <div class="hint-text">* Applies auto-crop unless set to FULL.</div>
             </div>
 
+            <div class="modal-group" style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px;">
+                <label>📊 Project Data Sheets (各站點報表)</label>
+                
+                <button class="link-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/18VGiWjdcdmVTsZhMq3gerXfC-ERJyiJ_SwSfcOi1ymI/edit?gid=0#gid=0', '_blank')">
+                    <span style="font-weight:bold; color:#0d6efd;">📑 Total Summary (四廠彙整總表)</span>
+                    <span>↗</span>
+                </button>
+
+                <button class="link-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/1GcnAkIHAhnVjrH9bO9TQbdTUwQT17XtyQWUPh7WSTLA/edit?gid=0#gid=0', '_blank')">
+                    <span>📑 MX Maintenance (Sheet)</span>
+                    <span>↗</span>
+                </button>
+
+                <button class="link-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/1SWMy51SZugHcAJjLPIV3-d3zBMicvEtsHUo1LGPSvBA/edit?gid=0#gid=0', '_blank')">
+                    <span>📑 CT Maintenance (Sheet)</span>
+                    <span>↗</span>
+                </button>
+
+                <button class="link-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/19O2drZ6wRL39jBia3IAME5wOACZ0O2HdnXeM8Y09MKM/edit?gid=0#gid=0', '_blank')">
+                    <span>📑 EX Maintenance (Sheet)</span>
+                    <span>↗</span>
+                </button>
+
+                <button class="link-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/15wgIGp-xznIL20HNsQgtQPijoZKEtNdE_2VTbt0rJjU/edit?gid=0#gid=0', '_blank')">
+                    <span>📑 CL Maintenance (Sheet)</span>
+                    <span>↗</span>
+                </button>
+            </div>
+
             <div style="text-align: center; color: var(--primary-color); font-size: 0.9em; margin-top: 15px;">
                 <p>✅ Cloud Paths are Locked (System Mode)</p>
             </div>
@@ -450,11 +471,13 @@
 
 <script>
     // ================= 初始化 =================
-    const DEFAULT_PASS = "1234"; 
     
     // --- 固定路徑 ---
     const FIXED_SCRIPT_ID = "AKfycbx7xITmnDHh3qpy62ZaXGQLMipqIN0N0ovHi0rU22VZriHTYHU-SHFdOMzlId4kWhMR/exec";
+    
+    // 使用 MX 的 Sheet ID 作為此 App 的預設存檔位置 (與您提供的第一個連結一致)
     const FIXED_SHEET_ID = "18VGiWjdcdmVTsZhMq3gerXfC-ERJyiJ_SwSfcOi1ymI";
+    
     const FIXED_FOLDER_ID = "1MCaCvWS73lyPd90yMXnDrD5BqiEw7O08";
 
     let processedImageBase64 = ""; 
@@ -463,22 +486,15 @@
     // 錄音狀態
     let isRecording = false; 
     let isManualStop = false; 
-    let voiceTimer = null;            
-    let countdownInterval = null;     
+    let voiceTimer = null;             
+    let countdownInterval = null;      
     let punctuationTimer = null; 
     let timeLeft = 0; 
     let snapshotText = ""; 
 
     window.onload = function() {
-        if(!localStorage.getItem("app_password")) {
-            localStorage.setItem("app_password", DEFAULT_PASS);
-        }
-        const isLoggedIn = localStorage.getItem("isLoggedIn");
-        if(isLoggedIn === "true") {
-            showApp();
-        } else {
-            document.getElementById('login-screen').style.display = 'flex';
-        }
+        // 直接顯示 App 畫面，不再檢查登入狀態
+        showApp();
         loadSettingsToUI();
         
         // 載入上次輸入的工號
@@ -488,31 +504,19 @@
         }
     };
 
-    function checkLogin() {
-        const input = document.getElementById('loginPass').value;
-        const storedPass = localStorage.getItem("app_password");
-        if(input === storedPass) {
-            localStorage.setItem("isLoggedIn", "true");
-            showApp();
-        } else {
-            alert("Wrong Password! (密碼錯誤)");
-        }
-    }
-
-    function logout() {
-        if(confirm("Lock and logout?\n(確定要鎖定並登出嗎？)")) {
-            localStorage.removeItem("isLoggedIn"); 
-            document.getElementById('app-screen').style.display = 'none';
-            document.getElementById('login-screen').style.display = 'flex'; 
-            document.getElementById('loginPass').value = ""; 
-            closeSettings();
-        }
-    }
-
     function showApp() {
-        document.getElementById('login-screen').style.display = 'none';
+        // 確保登入畫面已隱藏 (雖然 HTML 已經移除，但保留此行確保邏輯)
+        const loginScreen = document.getElementById('login-screen');
+        if (loginScreen) loginScreen.style.display = 'none';
+        
         document.getElementById('app-screen').style.display = 'block';
         applySettings(); 
+        
+        // 自動聚焦工號
+        setTimeout(() => { 
+            const workerInput = document.getElementById('input-worker-id');
+            if(workerInput) workerInput.focus(); 
+        }, 300);
     }
 
     // ================= 設定功能 & 語言同步 =================
@@ -537,15 +541,11 @@
     }
 
     function saveSettings() {
-        const newPass = document.getElementById('set-password').value;
         const timeout = document.getElementById('set-timeout').value;
         const warning = document.getElementById('set-warning').value;
         const lang = document.getElementById('set-lang').value; 
         const ratio = document.getElementById('set-ratio').value;
 
-        if(newPass.trim() === "") { alert("Password cannot be empty!"); return; }
-
-        localStorage.setItem("app_password", newPass); 
         localStorage.setItem("cfg_timeout", timeout);
         localStorage.setItem("cfg_warning", warning);
         localStorage.setItem("cfg_lang", lang);
@@ -559,7 +559,6 @@
     }
 
     function loadSettingsToUI() {
-        document.getElementById('set-password').value = localStorage.getItem("app_password");
         document.getElementById('set-timeout').value = localStorage.getItem("cfg_timeout") || "10";
         document.getElementById('set-warning').value = localStorage.getItem("cfg_warning") || "3";
         const savedLang = localStorage.getItem("cfg_lang") || "cmn-Hant-TW";
@@ -815,7 +814,7 @@
 
     function saveToCloud() {
         const note = document.getElementById('noteInput').value;
-        const workerId = document.getElementById('input-worker-id').value; // 抓取工號
+        const workerId = document.getElementById('input-worker-id').value; 
         const folderId = FIXED_FOLDER_ID;
         const scriptUrl = `https://script.google.com/macros/s/${FIXED_SCRIPT_ID}/exec`;
 
@@ -823,7 +822,6 @@
             alert("Empty! Please take a photo or write a note."); return;
         }
 
-        // 記憶工號
         if(workerId) {
             localStorage.setItem("worker_id", workerId);
         }
